@@ -82,6 +82,19 @@ void RefMatchLookAndFeel::drawButtonBackground(juce::Graphics& g,juce::Button& b
         return;
     }
 
+    if(bool(button.getProperties()["autoGainPill"])) {
+        const auto accent=cyan;
+        if(over || on) glowRounded(g,r,10.f,accent,on?.15f:.07f);
+        const auto fill=panelRaised.withMultipliedBrightness(down?.92f:over?1.06f:1.f);
+        g.setGradientFill(juce::ColourGradient(fill.brighter(.025f),r.getTopLeft(),fill.darker(.085f),r.getBottomRight(),false));
+        g.fillRoundedRectangle(r,10.f);
+        g.setColour((on?accent:line.brighter(.04f)).withAlpha(on?.95f:.88f));
+        g.drawRoundedRectangle(r,10.f,on?1.35f:1.1f);
+        g.setColour(juce::Colours::white.withAlpha(.025f));
+        g.drawRoundedRectangle(r.reduced(1.f),9.f,.8f);
+        return;
+    }
+
     const bool softAction=bool(button.getProperties()["softAction"]);
     if((glow && visualOn) || visualOn) glowRounded(g,r,compact?6.f:8.f,dual?violet:colour,compact?.20f:.17f);
 
@@ -117,6 +130,33 @@ void RefMatchLookAndFeel::drawButtonBackground(juce::Graphics& g,juce::Button& b
 }
 void RefMatchLookAndFeel::drawButtonText(juce::Graphics& g,juce::TextButton& button,bool over,bool down)
 {
+    if(bool(button.getProperties()["autoGainPill"])) {
+        const auto r=button.getLocalBounds().toFloat();
+        const auto accent=cyan;
+        const auto raw=button.getButtonText();
+        const int sep=raw.indexOfChar('|');
+        const auto left=sep>=0?raw.substring(0,sep):raw;
+        const auto right=sep>=0?raw.substring(sep+1):juce::String();
+        const float iconX=r.getX()+18.f, cy=r.getCentreY();
+        g.setColour(accent.withAlpha(button.isEnabled()?.98f:.62f));
+        const float heights[3]={8.f,15.f,11.f};
+        for(int i=0;i<3;++i) {
+            const float x=iconX-7.f+i*5.f;
+            g.fillRoundedRectangle(x,cy-heights[i]*.5f,2.4f,heights[i],1.2f);
+        }
+        g.setColour(text.withAlpha(button.isEnabled()?(down?.72f:over?1.f:.94f):.56f));
+        g.setFont(juce::Font(juce::FontOptions(11.2f,juce::Font::bold)));
+        g.drawText(left,juce::Rectangle<float>(iconX+13.f,r.getY(),88.f,r.getHeight()),juce::Justification::centredLeft);
+        if(right.isNotEmpty()) {
+            const float dividerX=r.getRight()-72.f;
+            g.setColour(line.brighter(.10f).withAlpha(.82f));
+            g.fillRoundedRectangle(dividerX,r.getY()+6.f,1.2f,r.getHeight()-12.f,.6f);
+            g.setColour(text.withAlpha(button.isEnabled()?.72f:.46f));
+            g.setFont(juce::Font(juce::FontOptions(10.8f)));
+            g.drawText(right,juce::Rectangle<float>(dividerX+8.f,r.getY(),r.getRight()-dividerX-12.f,r.getHeight()),juce::Justification::centredRight);
+        }
+        return;
+    }
     if(bool(button.getProperties()["trashIcon"])) {
         const auto r=button.getLocalBounds().toFloat();
         const auto c=text.withAlpha(down?.68f:over?1.f:.88f);
@@ -295,7 +335,8 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     }
     for(auto* button:{&b,&play,&recordRef})button->setColour(juce::TextButton::buttonOnColourId,violet);
     for(auto* button:{&play,&recordMix,&recordRef,&match,&reset,&autoGain})button->getProperties().set("glow",true);
-    for(auto* button:{&play,&back,&forward,&reset,&autoGain,&loopTab,&toneReset})button->getProperties().set("softAction",true);
+    for(auto* button:{&play,&back,&forward,&reset,&loopTab,&toneReset})button->getProperties().set("softAction",true);
+    autoGain.getProperties().set("autoGainPill",true);
     match.getProperties().set("dualAccent",true);match.getProperties().set("forceDual",true);
     recordMix.getProperties().set("recordIcon",true);recordRef.getProperties().set("recordIcon",true);
     switchButton.getProperties().set("roundSwitch",true);
@@ -466,12 +507,12 @@ void RefMatchAudioProcessorEditor::timerCallback()
     back.setEnabled(p.valid);forward.setEnabled(p.valid);
     if(processor.isAutoGainMatching()) {
         const float remaining=5.0f*(1.0f-processor.getAutoGainProgress());
-        autoGain.setButtonText("MEASURING " + juce::String(juce::jmax(0.0f,remaining),1) + "s");
+        autoGain.setButtonText("MEASURING|" + juce::String(juce::jmax(0.0f,remaining),1) + " s");
         autoGain.setEnabled(false);
         autoGain.setToggleState(true,juce::dontSendNotification);
     } else {
         const auto ag=processor.getAutoGainStatus();
-        autoGain.setButtonText(ag.startsWith("LEVEL MATCHED")?"AUTO " + juce::String(processor.getLastAutoGainDb(),1) + " dB":"AUTO GAIN");
+        autoGain.setButtonText(ag.startsWith("LEVEL MATCHED")?"AUTO GAIN|" + juce::String(processor.getLastAutoGainDb(),1) + " dB":"AUTO GAIN");
         autoGain.setEnabled(true);
         autoGain.setToggleState(false,juce::dontSendNotification);
     }
@@ -647,7 +688,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.36    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.37    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -811,7 +852,7 @@ void RefMatchAudioProcessorEditor::resized()
     // Top source cards
     a.setBounds(58,78,48,42); b.setBounds(554,78,48,42); switchButton.setBounds(437,70,66,66); matchState.setBounds(292,74,96,24);
     gain.setBounds(158,112,224,30);
-    autoGain.setBounds(286,145,96,22);
+    autoGain.setBounds(196,138,192,26);
     // Reference transport now occupies the former waveform row, directly under
     // title/artist, so the card reads as one compact player block.
     back.setBounds(678,118,42,28);

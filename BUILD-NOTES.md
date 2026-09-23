@@ -96,3 +96,8 @@ recover without being re-enabled. For a shorter track, adjust bounds while WAITI
 - Max Correction is now respected in MatchEQ curve scaling/processing.
 
 Build note: full macOS AU/VST3 compilation must run on macOS because the project uses Objective-C++/ScreenCaptureKit. The Linux validation environment cannot provide the Objective-C++ compiler/runtime required for the plugin target.
+
+## 0.5.37 — Auto Gain pill UI
+- Redesigned AUTO GAIN to match the requested compact mastering-style pill.
+- Added orange level icon, fixed AUTO GAIN label, divider, and separate result/countdown field.
+- Moved the control to the lower-right of the A card; DSP and 5-second matching behavior are unchanged.
