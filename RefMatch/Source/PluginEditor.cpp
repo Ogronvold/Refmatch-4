@@ -695,7 +695,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.40    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.41    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -859,7 +859,7 @@ void RefMatchAudioProcessorEditor::resized()
     // Top source cards
     a.setBounds(58,78,48,42); b.setBounds(554,78,48,42); switchButton.setBounds(437,70,66,66); matchState.setBounds(292,74,96,24);
     gain.setBounds(158,112,224,30);
-    autoGain.setBounds(196,138,192,26);
+    autoGain.setBounds(210,138,178,26);
     // Reference transport now occupies the former waveform row, directly under
     // title/artist, so the card reads as one compact player block.
     back.setBounds(678,118,42,28);
@@ -867,7 +867,7 @@ void RefMatchAudioProcessorEditor::resized()
     forward.setBounds(766,118,42,28);
 
     // Main action row: all labels fit at the native 960 px width.
-    recordMix.setBounds(44,184,166,38); recordRef.setBounds(222,184,166,38); match.setBounds(400,184,174,38); reset.setBounds(586,184,page==2?92:104,38);
+    recordMix.setBounds(44,184,166,38); recordRef.setBounds(222,184,166,38); match.setBounds(392,184,156,38); reset.setBounds(586,184,page==2?92:104,38);
     loopTab.setBounds(page==2?686:698,184,page==2?100:72,38);
     quickLoop.setBounds(page==2?790:774,184,page==2?66:82,38);
     eqOn.setBounds(860,184,82,38);

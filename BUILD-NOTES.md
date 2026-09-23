@@ -1,3 +1,7 @@
+
+## 0.5.41
+- Compacted the Auto Gain pill from the left while keeping the result value anchored in place.
+- Centered the MATCH action on the same horizontal center as the A/B switch control.
 # RefMatch 0.5.40
 
 - Auto Gain pill spacing tightened; result value moved inward for balanced padding.
