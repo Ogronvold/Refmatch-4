@@ -85,48 +85,90 @@ void RefMatchAudioProcessor::timerCallback()
 {
     referenceLoop.setAuditioning(isReferenceSelected());
 
-    // Five-second level match. A is measured pre-gain from the DAW input while B
-    // is measured from the system-reference capture (Logic/current process is
-    // excluded there). Accumulating RMS energy over the whole window is much
-    // more stable than matching instantaneous peaks.
+    // Five-second perceptual level match. A and B are measured in parallel with
+    // the same K-weighted short-term loudness detector. Only fresh, non-silent
+    // samples are accepted, and the final correction is the robust median A/B
+    // loudness delta rather than a fragile whole-window RMS ratio.
     if (autoGainRunning.load())
     {
         const double now = juce::Time::getMillisecondCounterHiRes();
         const double elapsed = now - autoGainStartedMs;
         autoGainProgress.store(juce::jlimit(0.0f, 1.0f, static_cast<float>(elapsed / 5000.0)));
 
-        const float src = sourceRmsSmooth.load();
-        const float ref = referenceAnalysis.rms.load();
-        // Ignore near-silence on either side so pauses do not skew the result.
-        if (src > 0.001f && ref > 0.001f)
+        const float srcLufs = sourceLoudness.getLufs();
+        const float refLufs = referenceAnalysis.loudness.getLufs();
+        const bool sourceFresh = now - sourceLoudness.getLastUpdateMs() < 150.0;
+        const bool referenceFresh = now - referenceAnalysis.loudness.getLastUpdateMs() < 150.0;
+
+        // Absolute gate. A relative gate is less useful for a five-second A/B
+        // comparison; the median below already rejects brief local outliers.
+        if (sourceFresh && referenceFresh && srcLufs > -60.0f && refLufs > -60.0f)
         {
-            autoGainSourcePower += double(src) * double(src);
-            autoGainReferencePower += double(ref) * double(ref);
-            ++autoGainFrames;
+            autoGainDifferences.push_back(refLufs - srcLufs);
+            ++autoGainValidFrames;
         }
 
         if (elapsed >= 5000.0)
         {
             autoGainRunning.store(false);
             autoGainProgress.store(1.0f);
-            if (autoGainFrames >= 20 && autoGainSourcePower > 1.0e-12 && autoGainReferencePower > 1.0e-12)
+
+            // 50 Hz timer: require roughly two seconds of valid overlapping audio.
+            if (autoGainValidFrames >= 100 && autoGainDifferences.size() >= 100)
             {
-                const double srcMeanPower = autoGainSourcePower / double(autoGainFrames);
-                const double refMeanPower = autoGainReferencePower / double(autoGainFrames);
-                const float db = juce::jlimit(-24.0f, 24.0f,
-                    static_cast<float>(10.0 * std::log10(refMeanPower / srcMeanPower)));
-                lastAutoGainDb.store(db);
-                if (auto* p = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("sourcegain")))
+                auto values = autoGainDifferences;
+                std::sort(values.begin(), values.end());
+                const auto medianOf = [](const std::vector<float>& v) -> float
                 {
-                    p->beginChangeGesture();
-                    p->setValueNotifyingHost(p->convertTo0to1(db));
-                    p->endChangeGesture();
+                    const size_t n = v.size();
+                    if (n == 0) return 0.0f;
+                    if ((n & 1u) != 0u) return v[n / 2];
+                    return 0.5f * (v[n / 2 - 1] + v[n / 2]);
+                };
+
+                const float firstMedian = medianOf(values);
+                std::vector<float> deviations;
+                deviations.reserve(values.size());
+                for (float v : values) deviations.push_back(std::abs(v - firstMedian));
+                std::sort(deviations.begin(), deviations.end());
+                const float mad = medianOf(deviations);
+
+                // Keep only a robust neighbourhood around the median. This stops
+                // pauses, starts and transient mismatches from deciding the gain.
+                const float keepRadius = juce::jmax(1.5f, 3.0f * mad);
+                std::vector<float> trimmed;
+                trimmed.reserve(values.size());
+                for (float v : values)
+                    if (std::abs(v - firstMedian) <= keepRadius)
+                        trimmed.push_back(v);
+                std::sort(trimmed.begin(), trimmed.end());
+                const float requestedDb = medianOf(trimmed.empty() ? values : trimmed);
+
+                // If the detector itself is wildly inconsistent, do not guess.
+                if (mad > 4.0f)
+                {
+                    autoGainStatus = "RETRY · UNSTABLE AUDIO";
                 }
-                autoGainStatus = "LEVEL MATCHED  " + juce::String(db, 1) + " dB";
+                else if (requestedDb < -12.0f || requestedDb > 12.0f)
+                {
+                    autoGainStatus = "RETRY · LEVELS TOO FAR";
+                }
+                else
+                {
+                    const float db = juce::jlimit(-12.0f, 12.0f, requestedDb);
+                    lastAutoGainDb.store(db);
+                    if (auto* p = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("sourcegain")))
+                    {
+                        p->beginChangeGesture();
+                        p->setValueNotifyingHost(p->convertTo0to1(db));
+                        p->endChangeGesture();
+                    }
+                    autoGainStatus = "LEVEL MATCHED  " + juce::String(db, 1) + " dB";
+                }
             }
             else
             {
-                autoGainStatus = "NOT ENOUGH SIGNAL";
+                autoGainStatus = "RETRY · NOT ENOUGH AUDIO";
             }
 
             // If AUTO GAIN temporarily auditioned B, return to A afterwards.
@@ -249,6 +291,9 @@ void RefMatchAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     learning.prepare();
     sourcePeakSmooth.store(0.0f);
     sourceRmsSmooth.store(0.0f);
+    sourceLoudness.prepare(sampleRate, channels);
+    sourceGainSmoother.reset(sampleRate, 0.200);
+    sourceGainSmoother.setCurrentAndTargetValue(juce::Decibels::decibelsToGain(apvts.getRawParameterValue("sourcegain")->load()));
     effectiveReference.store(false);
     referenceFade.prepare(sampleRate, isReferenceSelected());
 }
@@ -287,6 +332,7 @@ void RefMatchAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     sourceRms /= (float)numChannels;
     sourcePeakSmooth.store(juce::jmax(sourcePeak, sourcePeakSmooth.load() * 0.93f));
     sourceRmsSmooth.store(0.985f * sourceRmsSmooth.load() + 0.015f * sourceRms);
+    sourceLoudness.processBlock(dryMixBuffer);
 
     learning.push(dryMixBuffer,dryMixBuffer,false,currentSampleRate);
 
@@ -294,7 +340,20 @@ void RefMatchAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     if (!bypass)
     {
         const float sourceGain = juce::Decibels::decibelsToGain(apvts.getRawParameterValue("sourcegain")->load());
-        buffer.applyGain(sourceGain);
+        sourceGainSmoother.setTargetValue(sourceGain);
+        if (sourceGainSmoother.isSmoothing())
+        {
+            for (int i = 0; i < numSamples; ++i)
+            {
+                const float g = sourceGainSmoother.getNextValue();
+                for (int ch = 0; ch < numChannels; ++ch)
+                    buffer.setSample(ch, i, buffer.getSample(ch, i) * g);
+            }
+        }
+        else
+        {
+            buffer.applyGain(sourceGainSmoother.getCurrentValue());
+        }
 
     }
     beforeEffectAnalyser.pushBlock(buffer);
@@ -372,9 +431,9 @@ void RefMatchAudioProcessor::autoGainMatch()
     if (!isReferenceCaptureRunning() && !isReferenceCaptureStarting())
         startReferenceCapture();
 
-    autoGainSourcePower = 0.0;
-    autoGainReferencePower = 0.0;
-    autoGainFrames = 0;
+    autoGainDifferences.clear();
+    autoGainDifferences.reserve(300);
+    autoGainValidFrames = 0;
     autoGainStartedMs = juce::Time::getMillisecondCounterHiRes();
     autoGainProgress.store(0.0f);
     autoGainStatus = "MEASURING  5.0 s";

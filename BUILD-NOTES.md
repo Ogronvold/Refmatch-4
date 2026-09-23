@@ -1,3 +1,11 @@
+# RefMatch 0.5.39
+
+- Replaced 5 s raw-RMS Auto Gain with a K-weighted, LUFS-style parallel A/B level match.
+- Requires fresh overlapping audio from both A and B for roughly 2 s of the 5 s window.
+- Uses robust median + outlier rejection for repeatable results.
+- Refuses unstable/extreme matches instead of applying wild gain; automatic range is limited to ±12 dB.
+- A Gain now ramps over 200 ms to avoid abrupt gain jumps.
+
 # RefMatch 0.5.6 validation
 
 ## Architecture change

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 if(NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
     set(CMAKE_OSX_DEPLOYMENT_TARGET 13.0 CACHE STRING "Minimum macOS version")
 endif()
-project(RefMatch VERSION 0.5.37 LANGUAGES C CXX OBJCXX)
+project(RefMatch VERSION 0.5.39 LANGUAGES C CXX OBJCXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -38,6 +38,7 @@ juce_generate_juce_header(RefMatch)
 target_sources(RefMatch PRIVATE
     Source/PluginProcessor.cpp
     Source/LearnCapture.h
+    Source/LoudnessTracker.h
     Source/ReferenceLoop.h
     Source/EQDesign.h
     Source/TransportSwitch.h

@@ -148,12 +148,12 @@ void RefMatchLookAndFeel::drawButtonText(juce::Graphics& g,juce::TextButton& but
         g.setFont(juce::Font(juce::FontOptions(11.2f,juce::Font::bold)));
         g.drawText(left,juce::Rectangle<float>(iconX+13.f,r.getY(),88.f,r.getHeight()),juce::Justification::centredLeft);
         if(right.isNotEmpty()) {
-            const float dividerX=r.getRight()-72.f;
+            const float dividerX=r.getRight()-80.f;
             g.setColour(line.brighter(.10f).withAlpha(.82f));
             g.fillRoundedRectangle(dividerX,r.getY()+6.f,1.2f,r.getHeight()-12.f,.6f);
             g.setColour(text.withAlpha(button.isEnabled()?.72f:.46f));
             g.setFont(juce::Font(juce::FontOptions(10.8f)));
-            g.drawText(right,juce::Rectangle<float>(dividerX+8.f,r.getY(),r.getRight()-dividerX-12.f,r.getHeight()),juce::Justification::centredRight);
+            g.drawText(right,juce::Rectangle<float>(dividerX+7.f,r.getY(),r.getRight()-dividerX-20.f,r.getHeight()),juce::Justification::centredRight);
         }
         return;
     }
@@ -399,7 +399,7 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     a.setTooltip("Listen to your mix. Pauses the active media player.");b.setTooltip("Listen to reference. Mutes MIX and sends system PLAY.");
     recordMix.setTooltip("Record the incoming MIX spectrum before EQ. Click again to finish.");
     recordRef.setTooltip("Record system-reference spectrum. Requires capture permission and host audio processing. Click again to finish.");
-    autoGain.setTooltip("Measure MIX and reference for 5 seconds, then set A Gain to the same average level as the stream.");
+    autoGain.setTooltip("Measure MIX and reference together for 5 seconds using perceptual loudness matching, then set A Gain to the reference level.");
     match.setTooltip("When MIX and REF are captured, READY TO MATCH lights up. Click to calculate EQ and enable it on MIX.");
     setPage(1);processor.startReferenceCapture();startTimerHz(15);
 }
@@ -512,7 +512,12 @@ void RefMatchAudioProcessorEditor::timerCallback()
         autoGain.setToggleState(true,juce::dontSendNotification);
     } else {
         const auto ag=processor.getAutoGainStatus();
-        autoGain.setButtonText(ag.startsWith("LEVEL MATCHED")?"AUTO GAIN|" + juce::String(processor.getLastAutoGainDb(),1) + " dB":"AUTO GAIN");
+        if (ag.startsWith("LEVEL MATCHED"))
+            autoGain.setButtonText("AUTO GAIN|" + juce::String(processor.getLastAutoGainDb(),1) + " dB");
+        else if (ag.startsWith("RETRY"))
+            autoGain.setButtonText("AUTO GAIN|RETRY");
+        else
+            autoGain.setButtonText("AUTO GAIN");
         autoGain.setEnabled(true);
         autoGain.setToggleState(false,juce::dontSendNotification);
     }
@@ -688,7 +693,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.37    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.39    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);

@@ -10,6 +10,7 @@
 #include "TransportSwitch.h"
 #include "ReferenceLoop.h"
 #include "ReferenceAnalysis.h"
+#include "LoudnessTracker.h"
 
 class RefMatchAudioProcessor : public juce::AudioProcessor, private juce::Timer
 {
@@ -119,15 +120,16 @@ private:
 
     std::atomic<float> sourcePeakSmooth { 0.0f };
     std::atomic<float> sourceRmsSmooth { 0.0f };
+    LoudnessTracker sourceLoudness;
+    juce::SmoothedValue<float> sourceGainSmoother;
 
     std::atomic<bool> autoGainRunning { false };
     std::atomic<float> autoGainProgress { 0.0f };
     std::atomic<float> lastAutoGainDb { 0.0f };
     juce::String autoGainStatus { "AUTO GAIN" };
     double autoGainStartedMs = 0.0;
-    double autoGainSourcePower = 0.0;
-    double autoGainReferencePower = 0.0;
-    int autoGainFrames = 0;
+    std::vector<float> autoGainDifferences;
+    int autoGainValidFrames = 0;
     bool autoGainRestoreMix = false;
 
     std::atomic<double> currentSampleRate {48000.0};
