@@ -1,4 +1,7 @@
-# RefMatch 0.5.39
+# RefMatch 0.5.40
+
+- Auto Gain pill spacing tightened; result value moved inward for balanced padding.
+- Auto Gain now refuses to start until A/MIX has fresh audible signal and shows PLAY MIX instead.
 
 - Replaced 5 s raw-RMS Auto Gain with a K-weighted, LUFS-style parallel A/B level match.
 - Requires fresh overlapping audio from both A and B for roughly 2 s of the 5 s window.

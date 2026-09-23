@@ -426,6 +426,19 @@ void RefMatchAudioProcessor::autoGainMatch()
 {
     if (autoGainRunning.load()) return;
 
+    // AUTO GAIN is only meaningful while the DAW/mix is actively feeding A.
+    // A stopped transport can still leave the plug-in instantiated, so require
+    // both a fresh analyser update and real non-silent loudness before starting.
+    const double now = juce::Time::getMillisecondCounterHiRes();
+    const bool mixFresh = now - sourceLoudness.getLastUpdateMs() < 250.0;
+    const bool mixAudible = sourceLoudness.getLufs() > -60.0f;
+    if (!mixFresh || !mixAudible)
+    {
+        autoGainStatus = "PLAY MIX · THEN AUTO GAIN";
+        autoGainProgress.store(0.0f);
+        return;
+    }
+
     // Ensure B analysis is alive. The capture excludes Logic/current process, so
     // A can keep playing into the plug-in while the reference is measured.
     if (!isReferenceCaptureRunning() && !isReferenceCaptureStarting())

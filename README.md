@@ -6,7 +6,10 @@
 - No Match EQ DSP, gain, routing, transport, Loop, or Tone EQ behaviour was changed.
 
 
-## 0.5.39
+## 0.5.40
+
+- Auto Gain UI spacing polish.
+- Auto Gain requires active MIX playback before the 5-second measurement can begin.
 - Added 5-second AUTO GAIN / level match for A vs system reference B.
 - Uses gated accumulated RMS energy rather than instantaneous peak matching.
 - Automatically updates A Gain and shows the resulting dB offset in the UI.

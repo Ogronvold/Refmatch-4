@@ -148,12 +148,12 @@ void RefMatchLookAndFeel::drawButtonText(juce::Graphics& g,juce::TextButton& but
         g.setFont(juce::Font(juce::FontOptions(11.2f,juce::Font::bold)));
         g.drawText(left,juce::Rectangle<float>(iconX+13.f,r.getY(),88.f,r.getHeight()),juce::Justification::centredLeft);
         if(right.isNotEmpty()) {
-            const float dividerX=r.getRight()-80.f;
+            const float dividerX=r.getX()+104.f;
             g.setColour(line.brighter(.10f).withAlpha(.82f));
             g.fillRoundedRectangle(dividerX,r.getY()+6.f,1.2f,r.getHeight()-12.f,.6f);
             g.setColour(text.withAlpha(button.isEnabled()?.72f:.46f));
             g.setFont(juce::Font(juce::FontOptions(10.8f)));
-            g.drawText(right,juce::Rectangle<float>(dividerX+7.f,r.getY(),r.getRight()-dividerX-20.f,r.getHeight()),juce::Justification::centredRight);
+            g.drawText(right,juce::Rectangle<float>(dividerX+7.f,r.getY(),r.getRight()-dividerX-27.f,r.getHeight()),juce::Justification::centredRight);
         }
         return;
     }
@@ -516,6 +516,8 @@ void RefMatchAudioProcessorEditor::timerCallback()
             autoGain.setButtonText("AUTO GAIN|" + juce::String(processor.getLastAutoGainDb(),1) + " dB");
         else if (ag.startsWith("RETRY"))
             autoGain.setButtonText("AUTO GAIN|RETRY");
+        else if (ag.startsWith("PLAY MIX"))
+            autoGain.setButtonText("AUTO GAIN|PLAY MIX");
         else
             autoGain.setButtonText("AUTO GAIN");
         autoGain.setEnabled(true);
@@ -693,7 +695,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.39    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.40    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
