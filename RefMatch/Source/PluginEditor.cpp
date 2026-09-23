@@ -634,7 +634,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.34    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.35    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -671,14 +671,21 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     // image when the actual media track changes.
     const auto artworkTrack = media.track.isNotEmpty() ? media.track : (media.title + "|" + media.artist);
     if(media.artwork.isValid() && (cachedArtworkTrack != artworkTrack || !cachedArtwork.isValid())) {
-        cachedArtwork = media.artwork;
+        // Freeze the artwork into a fully opaque RGB snapshot. This deliberately
+        // removes source alpha/transparency so changing card backgrounds, meters,
+        // source selection or repaints can never show through the cover image.
+        juce::Image frozen(juce::Image::RGB, 96, 96, true);
+        juce::Graphics fg(frozen);
+        fg.fillAll(juce::Colour(0xff0f1722));
+        fg.drawImageWithin(media.artwork, 0, 0, frozen.getWidth(), frozen.getHeight(),
+                           juce::RectanglePlacement::centred, false);
+        cachedArtwork = frozen;
         cachedArtworkTrack = artworkTrack;
     }
     if(cachedArtwork.isValid()) {
-        g.drawImageWithin(cachedArtwork,620,76,46,46,juce::RectanglePlacement::centred);
-        // Keep cover art at a constant visual level; never modulate it from audio activity.
-        g.setColour(juce::Colours::white.withAlpha(.025f));
-        g.drawRoundedRectangle(cover,4.5f,.8f);
+        g.setOpacity(1.0f);
+        g.drawImageWithin(cachedArtwork,620,76,46,46,juce::RectanglePlacement::centred, false);
+        g.setOpacity(1.0f);
     } else {
         g.setColour(line);g.fillRoundedRectangle(cover,5.f);
         g.setColour(violet.withAlpha(.8f));g.fillEllipse(635,91,16,16);

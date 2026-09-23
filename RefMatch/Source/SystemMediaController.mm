@@ -131,12 +131,14 @@ void SystemMediaController::readPosition(PositionCompletion completion)
                 state->artwork={};state->artworkHash=0;state->artworkRead=false;state->artworkTrack=position.track;
             }
             NSData* imageData=get("kMRMediaRemoteNowPlayingInfoArtworkData");
-            if([imageData isKindOfClass:NSData.class] && [imageData length]>0 && [imageData length]<10*1024*1024) {
-                const auto hash=[imageData hash];
-                if(!state->artworkRead || state->artworkHash!=hash) {
-                    state->artwork=juce::ImageFileFormat::loadFrom([imageData bytes],size_t([imageData length]));
-                    state->artworkHash=hash;state->artworkRead=true;
-                }
+            if(!state->artworkRead && [imageData isKindOfClass:NSData.class] && [imageData length]>0 && [imageData length]<10*1024*1024) {
+                // First valid artwork for this track wins. MediaRemote can publish
+                // multiple transient artwork payloads while playback continues;
+                // replacing them causes visible flicker even though the song did
+                // not change. Keep one immutable image until track identity changes.
+                state->artwork=juce::ImageFileFormat::loadFrom([imageData bytes],size_t([imageData length]));
+                state->artworkHash=[imageData hash];
+                state->artworkRead=state->artwork.isValid();
             }
             position.artwork=state->artwork;
             if([duration respondsToSelector:@selector(doubleValue)])position.duration=[duration doubleValue];
