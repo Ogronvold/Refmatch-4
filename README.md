@@ -6,7 +6,7 @@
 - No Match EQ DSP, gain, routing, transport, Loop, or Tone EQ behaviour was changed.
 
 
-## 0.5.41
+## 0.5.42
 
 - Auto Gain UI spacing polish.
 - Auto Gain requires active MIX playback before the 5-second measurement can begin.

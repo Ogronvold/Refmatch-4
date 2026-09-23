@@ -1,3 +1,9 @@
+# RefMatch 0.5.42
+
+- Action-row spacing normalized to 12 px between Record Mix, Record Ref, Match, Reset, Loop, quick toggle, and EQ controls.
+- MATCH remains horizontally centered on the same axis as the A/B switch.
+- Auto Gain behavior and UI are unchanged from 0.5.41.
+
 
 ## 0.5.41
 - Compacted the Auto Gain pill from the left while keeping the result value anchored in place.

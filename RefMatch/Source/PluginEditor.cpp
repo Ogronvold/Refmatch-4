@@ -695,7 +695,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.41    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.42    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -867,11 +867,13 @@ void RefMatchAudioProcessorEditor::resized()
     forward.setBounds(766,118,42,28);
 
     // Main action row: all labels fit at the native 960 px width.
-    recordMix.setBounds(44,184,166,38); recordRef.setBounds(222,184,166,38); match.setBounds(392,184,156,38); reset.setBounds(586,184,page==2?92:104,38);
-    loopTab.setBounds(page==2?686:698,184,page==2?100:72,38);
-    quickLoop.setBounds(page==2?790:774,184,page==2?66:82,38);
-    eqOn.setBounds(860,184,82,38);
-    mixProfile.setBounds(62,219,146,18); refProfile.setBounds(240,219,146,18);
+    recordMix.setBounds(36,184,166,38); recordRef.setBounds(214,184,166,38); match.setBounds(392,184,156,38); reset.setBounds(560,184,page==2?92:104,38);
+    // Keep a consistent 12 px gap across the complete action row while
+    // preserving MATCH on the same horizontal centre as the A/B switch.
+    loopTab.setBounds(page==2?664:676,184,page==2?100:72,38);
+    quickLoop.setBounds(page==2?776:760,184,page==2?66:82,38);
+    eqOn.setBounds(854,184,82,38);
+    mixProfile.setBounds(54,219,146,18); refProfile.setBounds(232,219,146,18);
     eqTab.setBounds(44,184,120,36);
 
     // Graph controls
