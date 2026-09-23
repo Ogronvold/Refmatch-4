@@ -63,6 +63,10 @@ public:
     bool hasMatch() const { return apvts.state.getProperty("hasLearnedMatch",false); }
     ReferenceLoop& getLoop() { return referenceLoop; }
     void autoGainMatch();
+    bool isAutoGainMatching() const { return autoGainRunning.load(); }
+    float getAutoGainProgress() const { return autoGainProgress.load(); }
+    juce::String getAutoGainStatus() const { return autoGainStatus; }
+    float getLastAutoGainDb() const { return lastAutoGainDb.load(); }
     void learnMatch();
     void clearMatch();
     void resetSession();
@@ -115,6 +119,16 @@ private:
 
     std::atomic<float> sourcePeakSmooth { 0.0f };
     std::atomic<float> sourceRmsSmooth { 0.0f };
+
+    std::atomic<bool> autoGainRunning { false };
+    std::atomic<float> autoGainProgress { 0.0f };
+    std::atomic<float> lastAutoGainDb { 0.0f };
+    juce::String autoGainStatus { "AUTO GAIN" };
+    double autoGainStartedMs = 0.0;
+    double autoGainSourcePower = 0.0;
+    double autoGainReferencePower = 0.0;
+    int autoGainFrames = 0;
+    bool autoGainRestoreMix = false;
 
     std::atomic<double> currentSampleRate {48000.0};
     ReferenceFade referenceFade;

@@ -40,7 +40,7 @@ private:
     juce::TextButton eqTab{"MATCH EQ"},loopTab{"LOOP"};
     juce::TextButton clearLoop{"CLEAR"},zoomMinus{"-"},zoomPlus{"+"};
     juce::TextButton play{"PLAY"},toneButton{"TONE EQ"},toneReset{"RESET TONE"};
-    juce::TextButton recordMix{"RECORD MIX"},recordRef{"RECORD REF"},match{"MATCH"},reset{"RESET"};
+    juce::TextButton recordMix{"RECORD MIX"},recordRef{"RECORD REF"},match{"MATCH"},reset{"RESET"},autoGain{"AUTO GAIN"};
     juce::TextButton lowType{"SHELF"},highType{"SHELF"};
     juce::ToggleButton eqOn{"EQ ON"},toneOn{"TONE ON"},quickLoop{"LOOP"};
     juce::TextButton matchState{"MATCH ON"};

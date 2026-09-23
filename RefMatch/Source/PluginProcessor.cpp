@@ -84,6 +84,57 @@ void RefMatchAudioProcessor::pauseMediaAndRestore()
 void RefMatchAudioProcessor::timerCallback()
 {
     referenceLoop.setAuditioning(isReferenceSelected());
+
+    // Five-second level match. A is measured pre-gain from the DAW input while B
+    // is measured from the system-reference capture (Logic/current process is
+    // excluded there). Accumulating RMS energy over the whole window is much
+    // more stable than matching instantaneous peaks.
+    if (autoGainRunning.load())
+    {
+        const double now = juce::Time::getMillisecondCounterHiRes();
+        const double elapsed = now - autoGainStartedMs;
+        autoGainProgress.store(juce::jlimit(0.0f, 1.0f, static_cast<float>(elapsed / 5000.0)));
+
+        const float src = sourceRmsSmooth.load();
+        const float ref = referenceAnalysis.rms.load();
+        // Ignore near-silence on either side so pauses do not skew the result.
+        if (src > 0.001f && ref > 0.001f)
+        {
+            autoGainSourcePower += double(src) * double(src);
+            autoGainReferencePower += double(ref) * double(ref);
+            ++autoGainFrames;
+        }
+
+        if (elapsed >= 5000.0)
+        {
+            autoGainRunning.store(false);
+            autoGainProgress.store(1.0f);
+            if (autoGainFrames >= 20 && autoGainSourcePower > 1.0e-12 && autoGainReferencePower > 1.0e-12)
+            {
+                const double srcMeanPower = autoGainSourcePower / double(autoGainFrames);
+                const double refMeanPower = autoGainReferencePower / double(autoGainFrames);
+                const float db = juce::jlimit(-24.0f, 24.0f,
+                    static_cast<float>(10.0 * std::log10(refMeanPower / srcMeanPower)));
+                lastAutoGainDb.store(db);
+                if (auto* p = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("sourcegain")))
+                {
+                    p->beginChangeGesture();
+                    p->setValueNotifyingHost(p->convertTo0to1(db));
+                    p->endChangeGesture();
+                }
+                autoGainStatus = "LEVEL MATCHED  " + juce::String(db, 1) + " dB";
+            }
+            else
+            {
+                autoGainStatus = "NOT ENOUGH SIGNAL";
+            }
+
+            // If AUTO GAIN temporarily auditioned B, return to A afterwards.
+            if (autoGainRestoreMix && isReferenceSelected())
+                switchWithSystemMedia();
+            autoGainRestoreMix = false;
+        }
+    }
     const float smooth=apvts.getRawParameterValue("smooth")->load()/100.f;
     if(smooth!=lastSmooth && recording()==LearnCapture::none) {
         lastSmooth=smooth;matchEQ.setSmoothing(smooth);
@@ -314,17 +365,26 @@ bool RefMatchAudioProcessor::isReferenceSelected() const
 
 void RefMatchAudioProcessor::autoGainMatch()
 {
-    const float src = sourceRmsSmooth.load();
-    const float ref = referenceAnalysis.rms.load();
-    if (src <= 1.0e-6f || ref <= 1.0e-6f) return;
+    if (autoGainRunning.load()) return;
 
-    const float db = juce::jlimit(-24.0f, 24.0f, juce::Decibels::gainToDecibels(ref / src, -24.0f));
-    if (auto* p = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("sourcegain")))
-    {
-        p->beginChangeGesture();
-        p->setValueNotifyingHost(p->convertTo0to1(db));
-        p->endChangeGesture();
-    }
+    // Ensure B analysis is alive. The capture excludes Logic/current process, so
+    // A can keep playing into the plug-in while the reference is measured.
+    if (!isReferenceCaptureRunning() && !isReferenceCaptureStarting())
+        startReferenceCapture();
+
+    autoGainSourcePower = 0.0;
+    autoGainReferencePower = 0.0;
+    autoGainFrames = 0;
+    autoGainStartedMs = juce::Time::getMillisecondCounterHiRes();
+    autoGainProgress.store(0.0f);
+    autoGainStatus = "MEASURING  5.0 s";
+    autoGainRestoreMix = !isReferenceSelected();
+    autoGainRunning.store(true);
+
+    // Start/audition B for the measurement window if the user was on A. A's
+    // pre-gain input analyser continues to receive the DAW signal while muted.
+    if (autoGainRestoreMix)
+        switchWithSystemMedia();
 }
 
 void RefMatchAudioProcessor::learnMatch()

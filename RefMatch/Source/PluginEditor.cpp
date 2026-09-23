@@ -233,7 +233,7 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
 {
     setLookAndFeel(&look);setResizable(false,false);
     for(juce::Component* c:std::initializer_list<juce::Component*>{&a,&b,&switchButton,&eqTab,&loopTab,&play,&toneButton,&toneReset,&toneOn,&graphRange,&quickLoop,&matchState,&lowType,&highType,&midQ,
-        &recordMix,&recordRef,&match,&reset,&eqOn,&gain,&amount,&smooth,&back,&forward,&timeline,&inTime,&outTime,&setIn,&setOut,&clearLoop,&zoomMinus,&zoomPlus,&loopZoom,
+        &recordMix,&recordRef,&match,&reset,&autoGain,&eqOn,&gain,&amount,&smooth,&back,&forward,&timeline,&inTime,&outTime,&setIn,&setOut,&clearLoop,&zoomMinus,&zoomPlus,&loopZoom,
         &status,&mixProfile,&refProfile,&position})addAndMakeVisible(c);
     a.onClick=[this]{processor.selectSource(false);};b.onClick=[this]{processor.selectSource(true);};
     switchButton.onClick=[this]{processor.switchWithSystemMedia();};
@@ -273,6 +273,7 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     recordRef.onClick=[this]{processor.recordProfile(LearnCapture::reference);};
     match.onClick=[this]{if(processor.hasMatch())return;processor.learnMatch();matchFlashUntil=juce::Time::getMillisecondCounterHiRes()+850.0;message="Match applied";match.setButtonText("MATCHED");repaint();};
     reset.onClick=[this]{processor.resetSession();message.clear();matchFlashUntil=0.0;matchReady=false;match.setButtonText("MATCH");repaint();};
+    autoGain.onClick=[this]{processor.autoGainMatch();repaint();};
     reset.getProperties().set("resetIcon",true);
     for(auto* slider:{&gain,&amount,&smooth,&midQ}) {slider->setSliderStyle(juce::Slider::LinearHorizontal);slider->setTextBoxStyle(juce::Slider::TextBoxRight,false,66,24);}
     gain.setTextValueSuffix(" dB");amount.setTextValueSuffix(" %");smooth.setTextValueSuffix(" %");midQ.setTextValueSuffix(" Q");
@@ -293,8 +294,8 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
         toneAttachments[i]=std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(p.apvts,"tone"+juce::String(i/2)+(i%2?"freq":"gain"),tone[i]);
     }
     for(auto* button:{&b,&play,&recordRef})button->setColour(juce::TextButton::buttonOnColourId,violet);
-    for(auto* button:{&play,&recordMix,&recordRef,&match,&reset})button->getProperties().set("glow",true);
-    for(auto* button:{&play,&back,&forward,&reset,&loopTab,&toneReset})button->getProperties().set("softAction",true);
+    for(auto* button:{&play,&recordMix,&recordRef,&match,&reset,&autoGain})button->getProperties().set("glow",true);
+    for(auto* button:{&play,&back,&forward,&reset,&autoGain,&loopTab,&toneReset})button->getProperties().set("softAction",true);
     match.getProperties().set("dualAccent",true);match.getProperties().set("forceDual",true);
     recordMix.getProperties().set("recordIcon",true);recordRef.getProperties().set("recordIcon",true);
     switchButton.getProperties().set("roundSwitch",true);
@@ -357,6 +358,7 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     a.setTooltip("Listen to your mix. Pauses the active media player.");b.setTooltip("Listen to reference. Mutes MIX and sends system PLAY.");
     recordMix.setTooltip("Record the incoming MIX spectrum before EQ. Click again to finish.");
     recordRef.setTooltip("Record system-reference spectrum. Requires capture permission and host audio processing. Click again to finish.");
+    autoGain.setTooltip("Measure MIX and reference for 5 seconds, then set A Gain to the same average level as the stream.");
     match.setTooltip("When MIX and REF are captured, READY TO MATCH lights up. Click to calculate EQ and enable it on MIX.");
     setPage(1);processor.startReferenceCapture();startTimerHz(15);
 }
@@ -369,7 +371,7 @@ void RefMatchAudioProcessorEditor::setPage(int value)
     // Keep the full action bar visible in both views. Opening LOOP should feel
     // like the section expands below the toolbar, not like navigating away to
     // a different toolbar. This also keeps MATCHED / capture state visible.
-    for(auto* c:std::initializer_list<juce::Component*>{&recordMix,&recordRef,&match,&reset,&eqOn,&mixProfile,&refProfile})c->setVisible(true);
+    for(auto* c:std::initializer_list<juce::Component*>{&recordMix,&recordRef,&match,&reset,&autoGain,&eqOn,&mixProfile,&refProfile})c->setVisible(true);
     for(auto* c:std::initializer_list<juce::Component*>{&amount,&smooth,&toneOn,&graphRange,&toneReset,&lowType,&highType,&midQ})c->setVisible(main);
     toneButton.setVisible(false);
     for(auto& control:tone)control.setVisible(main);
@@ -462,6 +464,17 @@ void RefMatchAudioProcessorEditor::timerCallback()
     play.setButtonText("");
     play.setEnabled(!processor.isTransportPending() && !processor.getMediaController().isBusy());
     back.setEnabled(p.valid);forward.setEnabled(p.valid);
+    if(processor.isAutoGainMatching()) {
+        const float remaining=5.0f*(1.0f-processor.getAutoGainProgress());
+        autoGain.setButtonText("MEASURING " + juce::String(juce::jmax(0.0f,remaining),1) + "s");
+        autoGain.setEnabled(false);
+        autoGain.setToggleState(true,juce::dontSendNotification);
+    } else {
+        const auto ag=processor.getAutoGainStatus();
+        autoGain.setButtonText(ag.startsWith("LEVEL MATCHED")?"AUTO " + juce::String(processor.getLastAutoGainDb(),1) + " dB":"AUTO GAIN");
+        autoGain.setEnabled(true);
+        autoGain.setToggleState(false,juce::dontSendNotification);
+    }
     timeline.update(p.seconds,p.duration,processor.getLoop().getIn(),processor.getLoop().getOut(),processor.getLoop().isEnabled(),p.valid,p.track);
     setIn.setEnabled(p.valid);setOut.setEnabled(p.valid);
     repaint();
@@ -634,7 +647,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.35    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.36    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -797,7 +810,8 @@ void RefMatchAudioProcessorEditor::resized()
 {
     // Top source cards
     a.setBounds(58,78,48,42); b.setBounds(554,78,48,42); switchButton.setBounds(437,70,66,66); matchState.setBounds(292,74,96,24);
-    gain.setBounds(158,116,224,30);
+    gain.setBounds(158,112,224,30);
+    autoGain.setBounds(286,145,96,22);
     // Reference transport now occupies the former waveform row, directly under
     // title/artist, so the card reads as one compact player block.
     back.setBounds(678,118,42,28);
