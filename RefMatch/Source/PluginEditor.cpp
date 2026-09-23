@@ -634,7 +634,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.33    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.34    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -665,7 +665,15 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     // Compact reference player layout: source badge, brighter artwork + metadata,
     // a tiny live activity indicator, then transport directly below the metadata.
     const juce::Rectangle<float> cover(620,76,46,46);
-    if(media.artwork.isValid()) cachedArtwork=media.artwork;
+    // Artwork is intentionally latched per track. The now-playing API can refresh
+    // artwork data repeatedly while unrelated UI meters repaint; accepting every
+    // refresh can make the cover appear to pulse/blink. Only replace the cached
+    // image when the actual media track changes.
+    const auto artworkTrack = media.track.isNotEmpty() ? media.track : (media.title + "|" + media.artist);
+    if(media.artwork.isValid() && (cachedArtworkTrack != artworkTrack || !cachedArtwork.isValid())) {
+        cachedArtwork = media.artwork;
+        cachedArtworkTrack = artworkTrack;
+    }
     if(cachedArtwork.isValid()) {
         g.drawImageWithin(cachedArtwork,620,76,46,46,juce::RectanglePlacement::centred);
         // Keep cover art at a constant visual level; never modulate it from audio activity.

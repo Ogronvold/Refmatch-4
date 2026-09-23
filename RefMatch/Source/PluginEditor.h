@@ -62,5 +62,6 @@ private:
     double matchFlashUntil=0.0;
     bool matchReady=false;
     juce::Image cachedArtwork;
+    juce::String cachedArtworkTrack;
     enum class MatchDrag { none, low, high } matchDrag=MatchDrag::none;
 };
