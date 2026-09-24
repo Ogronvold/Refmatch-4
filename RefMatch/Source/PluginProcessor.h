@@ -62,6 +62,8 @@ public:
     LearnCapture::Profile profile(LearnCapture::Side side) const { return side==LearnCapture::reference?referenceAnalysis.learning.get(side):learning.get(side); }
     juce::String getLearningStatus() const { return learningStatus; }
     bool hasMatch() const { return apvts.state.getProperty("hasLearnedMatch",false); }
+    bool hasEnoughMatchData() const;
+    static constexpr double minimumMatchCaptureSeconds = 8.0;
     ReferenceLoop& getLoop() { return referenceLoop; }
     void autoGainMatch();
     bool isAutoGainMatching() const { return autoGainRunning.load(); }
@@ -75,6 +77,7 @@ public:
     std::vector<float> getFullMatchCurveDb() const { return matchEQ.getCurveDb(1.f); }
     std::vector<float> getMatchCurveDb() const;
     std::vector<float> getMatchCurveDbAtAmount(float amount) const;
+    float getResidualTonalErrorDb() const;
 
     std::array<float, SpectrumAnalyser::bins> getSourceSpectrum() const;
     std::array<float, SpectrumAnalyser::bins> getReferenceSpectrum() const;

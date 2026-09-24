@@ -1,4 +1,4 @@
-# RefMatch 0.5.42
+# RefMatch 0.5.43
 
 - Action-row spacing normalized to 12 px between Record Mix, Record Ref, Match, Reset, Loop, quick toggle, and EQ controls.
 - MATCH remains horizontally centered on the same axis as the A/B switch.

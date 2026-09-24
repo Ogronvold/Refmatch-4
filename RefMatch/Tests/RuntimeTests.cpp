@@ -129,9 +129,11 @@ int main()
     for(int i=1;i<EQDesign::bands;++i){fineVariation+=std::abs(fine[i]-fine[i-1]);broadVariation+=std::abs(broad[i]-broad[i-1]);}
     check(broadVariation<fineVariation,"Smooth reduces narrow alternating corrections");
     const auto fitted=EQDesign::fit(source,reference,48000,0);
-    const auto limited=EQDesign::scaled(fitted,1,4,48000);
-    for(int i=0;i<180;++i){const double hz=20*std::pow(1000.,i/179.);double db=0;
-        for(int b=0;b<EQDesign::bands;++b)db+=EQDesign::response(EQDesign::peak(48000,EQDesign::centre(b),limited[b]),hz,48000);
-        check(std::isfinite(db)&&std::abs(db)<4.3,"bounded finite applied EQ response");}
+    for(double amount : {1.0,2.0}) {
+        const auto limited=EQDesign::scaled(fitted,amount,4,48000);
+        for(int i=0;i<180;++i){const double hz=20*std::pow(1000.,i/179.);double db=0;
+            for(int b=0;b<EQDesign::bands;++b)db+=EQDesign::response(EQDesign::peak(48000,EQDesign::centre(b),limited[b]),hz,48000);
+            check(std::isfinite(db)&&std::abs(db)<4.3,"Max Correction is an absolute ceiling, including Amount above 100 percent");}
+    }
     std::cout << "PASS: fade endpoints, continuity, sample rates, reversal, capture failure and recovery\n";
 }

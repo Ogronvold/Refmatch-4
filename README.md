@@ -1,16 +1,13 @@
-# RefMatch 0.5.33 — Live Reference Spectrum
+# RefMatch 0.5.43 — Match workflow + verification
 
-- B/reference now gets a live purple spectral metric during normal reference playback, not only during REF capture.
-- Selecting B starts the existing system-audio analysis capture when needed; reference audio remains analysis-only and is never routed through the plug-in output.
-- A keeps the existing orange/cyan before/after live spectral metric.
-- No Match EQ DSP, gain, routing, transport, Loop, or Tone EQ behaviour was changed.
+This release keeps the existing RefMatch audio path and focuses on the core Match EQ workflow.
 
+- MATCH now requires at least 8.0 seconds of both MIX and REF capture.
+- Capture status shows a check mark once each side has enough data.
+- MATCH shows `ANALYZING...` during processing and `MATCHED ✓` when complete.
+- Match EQ status is moved out of the YOUR MIX card and sits with the match workflow.
+- Max Correction is now visible and host-automatable; it is the final absolute correction ceiling, including Amount above 100%.
+- A subtle `Residual tonal error ... dB avg` readout estimates the remaining level-normalised tonal difference over the active target range after the currently applied Match EQ curve.
+- Existing Auto Gain, source switching, reference artwork/player, Loop and Tone EQ behaviour are otherwise preserved.
 
-## 0.5.42
-
-- Auto Gain UI spacing polish.
-- Auto Gain requires active MIX playback before the 5-second measurement can begin.
-- Added 5-second AUTO GAIN / level match for A vs system reference B.
-- Uses gated accumulated RMS energy rather than instantaneous peak matching.
-- Automatically updates A Gain and shows the resulting dB offset in the UI.
-- Starts system-reference analysis as needed and restores MIX after the measurement when appropriate.
+See `BUILD-NOTES.md` for implementation notes and `RELEASE-SETUP.md` for the commercial release pipeline.

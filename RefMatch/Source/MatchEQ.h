@@ -20,6 +20,7 @@ public:
                const std::array<float,SpectrumAnalyser::bins>&,double sampleRate);
     void process(juce::AudioBuffer<float>&);
     std::vector<float> getCurveDb(float displayAmount=-1.f) const;
+    std::vector<float> getMatchOnlyCurveDb(float displayAmount=-1.f) const;
     EQDesign::Gains getGains() const;
     void restoreGains(const EQDesign::Gains&);
     void refresh(); // Message-thread coefficient design, never called in process.

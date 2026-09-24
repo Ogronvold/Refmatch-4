@@ -45,15 +45,16 @@ private:
     juce::ToggleButton eqOn{"EQ ON"},toneOn{"TONE ON"},quickLoop{"LOOP"};
     juce::TextButton matchState{"MATCH ON"};
     juce::ComboBox graphRange;
+    juce::Label residualStatus;
     float graphScale=24.f;
-    juce::Slider gain,amount,smooth,midQ,loopZoom;
+    juce::Slider gain,amount,smooth,maxCorrection,midQ,loopZoom;
     std::array<juce::Slider,6> tone;
     std::array<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>,6> toneAttachments;
     juce::TextEditor inTime,outTime;
     juce::TextButton back{"-5 s"},forward{"+5 s"},setIn{"SET IN"},setOut{"SET OUT"};
     LoopTimeline timeline;
     juce::Label status,mixProfile,refProfile,position;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> gainAttach,amountAttach,smoothAttach,midQAttach;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> gainAttach,amountAttach,smoothAttach,maxCorrectionAttach,midQAttach;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> eqAttach,toneOnAttach,lowShelfAttach,highShelfAttach;
     juce::TooltipWindow tips{this,650};
     juce::String message;
@@ -61,6 +62,9 @@ private:
     bool showTone=true;
     double matchFlashUntil=0.0;
     bool matchReady=false;
+    bool matchAnalyzing=false;
+    double nextResidualUpdateMs=0.0;
+    float lastResidualDb=-1.0f;
     juce::Image cachedArtwork;
     juce::String cachedArtworkTrack;
     enum class MatchDrag { none, low, high } matchDrag=MatchDrag::none;

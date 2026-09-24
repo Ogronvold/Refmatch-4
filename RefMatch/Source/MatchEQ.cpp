@@ -86,16 +86,27 @@ void MatchEQ::process(juce::AudioBuffer<float>& buffer)
         }
     }
 }
-std::vector<float> MatchEQ::getCurveDb(float displayAmount) const
+std::vector<float> MatchEQ::getMatchOnlyCurveDb(float displayAmount) const
 {
     const auto sr=rate.load();auto gains=EQDesign::scaled(getGains(),displayAmount<0?amount.load():displayAmount,limit.load(),sr);
     for(int b=0;b<EQDesign::bands;++b)gains[b]*=matchWeight(EQDesign::centre(b));
-    std::array<float,6> manual;{const juce::SpinLock::ScopedLockType guard(lock);manual=tone;}
-    if(!toneEnabled.load())for(int i=0;i<3;++i)manual[2*i]=0;
     std::vector<float> result(180);
     for(int i=0;i<180;++i) {
         const double hz=20*std::pow(std::min(20000.,sr*.45)/20.,i/179.);
         double db=0;for(int b=0;b<EQDesign::bands;++b)db+=EQDesign::response(EQDesign::peak(sr,EQDesign::centre(b),gains[b]),hz,sr);
+        result[i]=float(db);
+    }return result;
+}
+
+std::vector<float> MatchEQ::getCurveDb(float displayAmount) const
+{
+    auto result=getMatchOnlyCurveDb(displayAmount);
+    const auto sr=rate.load();
+    std::array<float,6> manual;{const juce::SpinLock::ScopedLockType guard(lock);manual=tone;}
+    if(!toneEnabled.load())for(int i=0;i<3;++i)manual[2*i]=0;
+    for(int i=0;i<180;++i) {
+        const double hz=20*std::pow(std::min(20000.,sr*.45)/20.,i/179.);
+        double db=result[i];
         for(int band=0;band<3;++band)db+=EQDesign::response(toneCoeff(band,sr,manual[2*band],manual[2*band+1]),hz,sr);
         result[i]=float(db);
     }return result;

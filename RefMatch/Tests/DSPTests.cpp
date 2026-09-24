@@ -58,11 +58,14 @@ int main()
     }
     const double measured=10*std::log10(outputEnergy/inputEnergy);
     require(std::abs(measured-.5)<.15,"Max Correction limits the audible match response");
-    // Amount must scale the already-limited 100% curve, not hit the limiter early
-    // and plateau. With a 0.5 dB max, 50% Amount should be about 0.25 dB.
+    // Max Correction is the final safety ceiling. Even an aggressive Amount must
+    // never push the applied Match EQ past the selected absolute limit.
     eq.setAmount(.5f);eq.refresh();
     float limitedHalfPeak=0;for(auto db:eq.getCurveDb())limitedHalfPeak=std::max(limitedHalfPeak,std::abs(db));
-    require(limitedHalfPeak>.18f && limitedHalfPeak<.32f,"Amount remains proportional after Max Correction limiting");
+    require(limitedHalfPeak<=.55f,"Max Correction caps the applied curve at lower Amount values");
+    eq.setAmount(2.f);eq.refresh();
+    float limitedDoublePeak=0;for(auto db:eq.getCurveDb())limitedDoublePeak=std::max(limitedDoublePeak,std::abs(db));
+    require(limitedDoublePeak<=.55f,"Max Correction remains an absolute ceiling at 200 percent Amount");
     eq.setMaxCorrectionDb(12.f);eq.refresh();
     const auto fullScaleCurve=eq.getCurveDb(1.f);
     eq.setAmount(.5f);const auto halfCurve=eq.getCurveDb();

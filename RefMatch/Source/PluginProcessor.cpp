@@ -459,11 +459,16 @@ void RefMatchAudioProcessor::autoGainMatch()
         switchWithSystemMedia();
 }
 
+bool RefMatchAudioProcessor::hasEnoughMatchData() const
+{
+    const auto a=profile(LearnCapture::mix),b=profile(LearnCapture::reference);
+    return a.ready && b.ready && a.seconds>=minimumMatchCaptureSeconds && b.seconds>=minimumMatchCaptureSeconds;
+}
+
 void RefMatchAudioProcessor::learnMatch()
 {
     learning.stop();referenceAnalysis.learning.stop();
-    const auto a=profile(LearnCapture::mix),b=profile(LearnCapture::reference);
-    if(!a.ready || !b.ready) { learningStatus="Record both MIX and REF first. Recommended: at least 8 s of representative audio.";return; }
+    if(!hasEnoughMatchData()) { learningStatus="Capture at least 8 s of MIX and REF";return; }
     recalculateMatch();
     apvts.state.setProperty("hasLearnedMatch",true,nullptr);
     apvts.getParameter("matchenabled")->setValueNotifyingHost(1.f);
@@ -512,6 +517,39 @@ void RefMatchAudioProcessor::resetSession()
 
 std::vector<float> RefMatchAudioProcessor::getMatchCurveDb() const { return matchEQ.getCurveDb(); }
 std::vector<float> RefMatchAudioProcessor::getMatchCurveDbAtAmount(float amount) const { return matchEQ.getCurveDb(amount); }
+
+float RefMatchAudioProcessor::getResidualTonalErrorDb() const
+{
+    if(!hasMatch())return -1.0f;
+    const auto mix=profile(LearnCapture::mix),ref=profile(LearnCapture::reference);
+    if(!mix.ready || !ref.ready)return -1.0f;
+    const double sr=currentSampleRate.load();
+    const double top=std::min(20000.0,sr*.45);
+    const float low=apvts.getRawParameterValue("matchlow")->load();
+    const float high=apvts.getRawParameterValue("matchhigh")->load();
+    const auto correction=matchEQ.getMatchOnlyCurveDb();
+    std::array<double,180> difference{};
+    std::array<bool,180> used{};
+    auto sampleProfile=[](const LearnCapture::Profile& p,double hz) {
+        const double source=hz*SpectrumAnalyser::fftSize/p.sampleRate;
+        const int j=std::clamp(int(source),0,SpectrumAnalyser::bins-1);
+        const int k=std::min(j+1,SpectrumAnalyser::bins-1);
+        const double frac=std::clamp(source-j,0.0,1.0);
+        return double(p.db[j])+frac*double(p.db[k]-p.db[j]);
+    };
+    double mean=0.0;int count=0;
+    for(int i=0;i<180;++i) {
+        const double hz=20.0*std::pow(top/20.0,double(i)/179.0);
+        if(hz<low || hz>high)continue;
+        difference[i]=sampleProfile(ref,hz)-sampleProfile(mix,hz);
+        used[i]=true;mean+=difference[i];++count;
+    }
+    if(count<4)return -1.0f;
+    mean/=count;
+    double total=0.0;
+    for(int i=0;i<180;++i)if(used[i])total+=std::abs((difference[i]-mean)-double(correction[i]));
+    return float(total/count);
+}
 std::array<float, SpectrumAnalyser::bins> RefMatchAudioProcessor::getSourceSpectrum() const { auto values=sourceAnalyser.getAveragedMagnitudes();if(juce::Time::getMillisecondCounterHiRes()-lastAudioCallbackMs.load()>200)values.fill(-100.f);return values; }
 std::array<float, SpectrumAnalyser::bins> RefMatchAudioProcessor::getReferenceSpectrum() const { auto values=referenceAnalysis.analyser.getAveragedMagnitudes();if(!referenceAnalysis.present.load())values.fill(-100.f);return values; }
 std::array<float, SpectrumAnalyser::bins> RefMatchAudioProcessor::getBeforeEffectSpectrum() const { auto values=beforeEffectAnalyser.getAveragedMagnitudes();if(juce::Time::getMillisecondCounterHiRes()-lastAudioCallbackMs.load()>200)values.fill(-100.f);return values; }
