@@ -85,22 +85,32 @@ void RefMatchLookAndFeel::drawButtonBackground(juce::Graphics& g,juce::Button& b
     if(button.getProperties().contains("captureProgress")) {
         const float progress=juce::jlimit(0.0f,1.0f,float(button.getProperties()["captureProgress"]));
         const auto accent=button.findColour(juce::TextButton::buttonOnColourId);
+        const bool ready=progress>=.999f;
         const auto fill=panelRaised.withMultipliedBrightness(down?.92f:over?1.06f:1.f);
+
+        // Neutral base before capture and behind the in-button progress fill.
         g.setGradientFill(juce::ColourGradient(fill.brighter(.025f),r.getTopLeft(),fill.darker(.085f),r.getBottomRight(),false));
         g.fillRoundedRectangle(r,8.f);
-        if(progress>0.001f) {
+
+        if(ready) {
+            // At 8 s the progress bar becomes a stable completed state. Capture may
+            // continue, but the visual no longer behaves like an extending progress bar.
+            glowRounded(g,r,8.f,accent,on?.18f:.12f);
+            g.setGradientFill(juce::ColourGradient(accent.brighter(.10f).withAlpha(.88f),r.getTopLeft(),
+                                                   accent.darker(.28f).withAlpha(.58f),r.getTopRight(),false));
+            g.fillRoundedRectangle(r,8.f);
+        } else if(progress>0.001f) {
+            // 0-8 s: integrated left-to-right progress inside the capture button.
             juce::Graphics::ScopedSaveState save(g);
             g.reduceClipRegion(r.withWidth(r.getWidth()*progress).getSmallestIntegerContainer());
-            const bool completed=progress>=.999f && !on;
-            const float a1=completed?.44f:.82f, a2=completed?.28f:.62f;
-            g.setGradientFill(juce::ColourGradient(accent.withAlpha(a1),r.getTopLeft(),accent.darker(.22f).withAlpha(a2),r.getTopRight(),false));
+            g.setGradientFill(juce::ColourGradient(accent.brighter(.05f).withAlpha(.90f),r.getTopLeft(),
+                                                   accent.darker(.22f).withAlpha(.66f),r.getTopRight(),false));
             g.fillRoundedRectangle(r,8.f);
         }
-        if(progress>=.999f && on) glowRounded(g,r,8.f,accent,.08f);
-        const bool completed=progress>=.999f && !on;
-        g.setColour((progress>=.999f?accent:line).withAlpha(completed?.68f:(progress>=.999f?.90f:.74f)));
-        g.drawRoundedRectangle(r,8.f,progress>=.999f?1.15f:1.f);
-        g.setColour(juce::Colours::white.withAlpha(.025f));
+
+        g.setColour((ready?accent:line).withAlpha(ready?.92f:.74f));
+        g.drawRoundedRectangle(r,8.f,ready?1.25f:1.f);
+        g.setColour(juce::Colours::white.withAlpha(ready?.055f:.025f));
         g.drawRoundedRectangle(r.reduced(1.f),7.f,.8f);
         return;
     }
@@ -528,17 +538,19 @@ void RefMatchAudioProcessorEditor::timerCallback()
     recordMix.setToggleState(recordingMix,juce::dontSendNotification);
     recordRef.setToggleState(recordingRef,juce::dontSendNotification);
     if(recordingMix)
-        recordMix.setButtonText(mixProgress>=.999f?"MIX READY · "+juce::String(m.seconds,1)+" s":"CAPTURING MIX "+juce::String(m.seconds,1)+" s");
+        recordMix.setButtonText(mixProgress>=.999f?"MIX READY ✓":"LISTENING...  "+juce::String(m.seconds,1)+" s");
     else
         recordMix.setButtonText(m.seconds>=RefMatchAudioProcessor::minimumMatchCaptureSeconds?"MIX READY ✓":"RECORD MIX");
     if(recordingRef)
-        recordRef.setButtonText(refProgress>=.999f?"REF READY · "+juce::String(r.seconds,1)+" s":"CAPTURING REF "+juce::String(r.seconds,1)+" s");
+        recordRef.setButtonText(refProgress>=.999f?"REF READY ✓":"LISTENING...  "+juce::String(r.seconds,1)+" s");
     else
         recordRef.setButtonText(r.seconds>=RefMatchAudioProcessor::minimumMatchCaptureSeconds?"REF READY ✓":"RECORD REF");
     const auto captureLabel=[](const LearnCapture::Profile& p,bool recording) {
-        if(recording)return juce::String(); // progress button already carries the live timing
-        if(p.ready)return "CAPTURED  "+juce::String(p.seconds,1)+" s"+(p.seconds>=RefMatchAudioProcessor::minimumMatchCaptureSeconds?"  ✓":"");
-        return juce::String();
+        if(p.seconds>=RefMatchAudioProcessor::minimumMatchCaptureSeconds) {
+            if(recording)return juce::String(p.seconds,1)+" s captured  ·  keep listening";
+            return "CAPTURED  "+juce::String(p.seconds,1)+" s  ✓";
+        }
+        return juce::String(); // 0-8 s timing is already shown inside the progress button
     };
     mixProfile.setText(captureLabel(m,recordingMix),juce::dontSendNotification);
     refProfile.setText(captureLabel(r,recordingRef),juce::dontSendNotification);
@@ -797,7 +809,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.45    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.46    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);

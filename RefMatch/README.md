@@ -1,4 +1,4 @@
-# RefMatch 0.5.45
+# RefMatch 0.5.46
 
 See ../README.md, ../BUILD-NOTES.md and ../INSTALL-DA.txt.
 
