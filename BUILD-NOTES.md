@@ -1,4 +1,4 @@
-# RefMatch 0.5.47
+# RefMatch 0.5.48
 
 - Action-row spacing normalized to 12 px between Record Mix, Record Ref, Match, Reset, Loop, quick toggle, and EQ controls.
 - MATCH remains horizontally centered on the same axis as the A/B switch.
@@ -139,7 +139,7 @@ Build note: full macOS AU/VST3 compilation must run on macOS because the project
 - Fixed UTF-8 UI strings and clarified Loop / Match EQ / Tone states.
 
 
-## 0.5.47
+## 0.5.48
 - Capture-button visual state redesign only.
 - 0–8 s integrated progress fill with `LISTENING...` live time.
 - >=8 s stable READY state while capture can continue.
