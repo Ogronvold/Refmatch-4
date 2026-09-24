@@ -33,8 +33,23 @@ void RefMatchAudioProcessor::recordProfile(LearnCapture::Side side)
     if (side==LearnCapture::reference && !isReferenceCaptureRunning()) startReferenceCapture();
     selectSource(side==LearnCapture::reference);
     learning.stop();referenceAnalysis.learning.stop();
-    if(side==LearnCapture::reference)referenceAnalysis.learning.start(side);else learning.start(side);
-    learningStatus=side==LearnCapture::mix ? "Recording MIX - play your mix" : "Recording REF - play your reference";
+    if(side==LearnCapture::reference) {
+        // Arm capture before asking the media player to run, so the first audible
+        // samples cannot be missed. selectSource() already initiates PLAY while
+        // switching from A to B. Only send an explicit PLAY when B is already
+        // selected and paused; this avoids a double-trigger/restart.
+        referenceAnalysis.learning.start(side);
+        if(isReferenceSelected() && !isTransportPending() && mediaController.playbackState()!=1 && !mediaController.isBusy()) {
+            mediaController.request(SystemMediaController::Command::play,
+                [this](bool ok, SystemMediaInfo, juce::String error) {
+                    if(!ok) {
+                        transportError = error.isNotEmpty()?error:"Could not start stream playback. Start it manually.";
+                        learningStatus = "REF armed - start stream playback manually";
+                    }
+                });
+        }
+    } else learning.start(side);
+    learningStatus=side==LearnCapture::mix ? "Recording MIX - play your mix" : "Recording REF - stream playback armed";
 }
 
 void RefMatchAudioProcessor::switchWithSystemMedia()

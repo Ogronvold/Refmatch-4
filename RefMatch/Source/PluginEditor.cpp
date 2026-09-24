@@ -82,6 +82,26 @@ void RefMatchLookAndFeel::drawButtonBackground(juce::Graphics& g,juce::Button& b
         return;
     }
 
+    if(button.getProperties().contains("captureProgress")) {
+        const float progress=juce::jlimit(0.0f,1.0f,float(button.getProperties()["captureProgress"]));
+        const auto accent=button.findColour(juce::TextButton::buttonOnColourId);
+        const auto fill=panelRaised.withMultipliedBrightness(down?.92f:over?1.06f:1.f);
+        g.setGradientFill(juce::ColourGradient(fill.brighter(.025f),r.getTopLeft(),fill.darker(.085f),r.getBottomRight(),false));
+        g.fillRoundedRectangle(r,8.f);
+        if(progress>0.001f) {
+            juce::Graphics::ScopedSaveState save(g);
+            g.reduceClipRegion(r.withWidth(r.getWidth()*progress).getSmallestIntegerContainer());
+            g.setGradientFill(juce::ColourGradient(accent.withAlpha(.82f),r.getTopLeft(),accent.darker(.22f).withAlpha(.62f),r.getTopRight(),false));
+            g.fillRoundedRectangle(r,8.f);
+        }
+        if(progress>=.999f) glowRounded(g,r,8.f,accent,.10f);
+        g.setColour((progress>=.999f?accent:line).withAlpha(progress>=.999f?.92f:.74f));
+        g.drawRoundedRectangle(r,8.f,progress>=.999f?1.25f:1.f);
+        g.setColour(juce::Colours::white.withAlpha(.025f));
+        g.drawRoundedRectangle(r.reduced(1.f),7.f,.8f);
+        return;
+    }
+
     if(bool(button.getProperties()["autoGainPill"])) {
         const auto accent=cyan;
         if(over || on) glowRounded(g,r,10.f,accent,on?.15f:.07f);
@@ -137,7 +157,7 @@ void RefMatchLookAndFeel::drawButtonText(juce::Graphics& g,juce::TextButton& but
         const int sep=raw.indexOfChar('|');
         const auto left=sep>=0?raw.substring(0,sep):raw;
         const auto right=sep>=0?raw.substring(sep+1):juce::String();
-        const float iconX=r.getX()+18.f, cy=r.getCentreY();
+        const float iconX=r.getX()+14.f, cy=r.getCentreY();
         g.setColour(accent.withAlpha(button.isEnabled()?.98f:.62f));
         const float heights[3]={8.f,15.f,11.f};
         for(int i=0;i<3;++i) {
@@ -146,14 +166,14 @@ void RefMatchLookAndFeel::drawButtonText(juce::Graphics& g,juce::TextButton& but
         }
         g.setColour(text.withAlpha(button.isEnabled()?(down?.72f:over?1.f:.94f):.56f));
         g.setFont(juce::Font(juce::FontOptions(11.2f,juce::Font::bold)));
-        g.drawText(left,juce::Rectangle<float>(iconX+13.f,r.getY(),88.f,r.getHeight()),juce::Justification::centredLeft);
+        const float dividerX = right.isNotEmpty() ? r.getRight()-58.f : r.getRight();
+        g.drawText(left,juce::Rectangle<float>(iconX+11.f,r.getY(),juce::jmax(30.f,dividerX-(iconX+15.f)),r.getHeight()),juce::Justification::centredLeft);
         if(right.isNotEmpty()) {
-            const float dividerX=r.getX()+104.f;
             g.setColour(line.brighter(.10f).withAlpha(.82f));
             g.fillRoundedRectangle(dividerX,r.getY()+6.f,1.2f,r.getHeight()-12.f,.6f);
             g.setColour(text.withAlpha(button.isEnabled()?.72f:.46f));
             g.setFont(juce::Font(juce::FontOptions(10.8f)));
-            g.drawText(right,juce::Rectangle<float>(dividerX+7.f,r.getY(),r.getRight()-dividerX-27.f,r.getHeight()),juce::Justification::centredRight);
+            g.drawText(right,juce::Rectangle<float>(dividerX+5.f,r.getY(),r.getRight()-dividerX-10.f,r.getHeight()),juce::Justification::centredRight);
         }
         return;
     }
@@ -357,6 +377,8 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     autoGain.getProperties().set("autoGainPill",true);
     match.getProperties().set("dualAccent",true);match.getProperties().set("forceDual",true);
     recordMix.getProperties().set("recordIcon",true);recordRef.getProperties().set("recordIcon",true);
+    recordMix.getProperties().set("captureProgress",0.0f);
+    recordRef.getProperties().set("captureProgress",0.0f);
     switchButton.getProperties().set("roundSwitch",true);
     switchButton.setButtonText("");
     switchButton.setTooltip("Switch between your mix and the system reference.");
@@ -386,7 +408,7 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
             parameter->endChangeGesture();
         }
     };
-    matchState.setTooltip("MATCH ON = Match EQ + Tone EQ active. BYPASSED = those stages are bypassed while A gain remains active.");
+    matchState.setTooltip("Fast ORIGINAL / MATCHED comparison. This is not the Match EQ on/off switch.");
     quickLoop.getProperties().set("pillToggle",true);eqOn.getProperties().set("pillToggle",true);toneOn.getProperties().set("pillToggle",true);
     quickLoop.setColour(juce::ToggleButton::tickColourId,violet);eqOn.setColour(juce::ToggleButton::tickColourId,violet);toneOn.setColour(juce::ToggleButton::tickColourId,violet);
     quickLoop.setTooltip("Toggle the most recently defined loop without opening the LOOP page.");
@@ -418,7 +440,7 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     a.setTooltip("Listen to your mix. Pauses the active media player.");b.setTooltip("Listen to reference. Mutes MIX and sends system PLAY.");
     recordMix.setTooltip("Record the incoming MIX spectrum before EQ. Click again to finish.");
     recordRef.setTooltip("Record system-reference spectrum. Requires capture permission and host audio processing. Click again to finish.");
-    autoGain.setTooltip("Measure MIX and reference together for 5 seconds using perceptual loudness matching, then set A Gain to the reference level.");
+    autoGain.setTooltip("Secondary level-match control. Measure MIX and reference together for 5 seconds, then smoothly set A Gain to the reference loudness.");
     match.setTooltip("When MIX and REF are captured, READY TO MATCH lights up. Click to calculate EQ and enable it on MIX.");
     setPage(1);processor.startReferenceCapture();startTimerHz(15);
 }
@@ -492,17 +514,31 @@ void RefMatchAudioProcessorEditor::timerCallback()
     switchButton.setButtonText("");
     switchButton.getProperties().set("transportPending",processor.isTransportPending());
     const auto m=processor.profile(LearnCapture::mix),r=processor.profile(LearnCapture::reference);
-    recordMix.setButtonText(processor.recording()==LearnCapture::mix?"STOP MIX":"RECORD MIX");
-    recordMix.setToggleState(processor.recording()==LearnCapture::mix,juce::dontSendNotification);
-    recordRef.setToggleState(processor.recording()==LearnCapture::reference,juce::dontSendNotification);
-    recordRef.setButtonText(processor.recording()==LearnCapture::reference?"STOP REF":"RECORD REF");
-    const auto captureLabel=[](const LearnCapture::Profile& p,const juce::String& fallback,bool recording) {
-        if(recording)return "RECORDING  "+juce::String(p.seconds,1)+" s";
-        if(p.ready)return "CAPTURED  "+juce::String(p.seconds,1)+" s"+(p.seconds>=RefMatchAudioProcessor::minimumMatchCaptureSeconds?"  ✓":"");
-        return fallback;
+    const bool recordingMix=processor.recording()==LearnCapture::mix;
+    const bool recordingRef=processor.recording()==LearnCapture::reference;
+    const auto captureProgress=[](const LearnCapture::Profile& p) {
+        return juce::jlimit(0.0f,1.0f,float(p.seconds/RefMatchAudioProcessor::minimumMatchCaptureSeconds));
     };
-    mixProfile.setText(captureLabel(m,"MIX",processor.recording()==LearnCapture::mix),juce::dontSendNotification);
-    refProfile.setText(captureLabel(r,"REF",processor.recording()==LearnCapture::reference),juce::dontSendNotification);
+    const auto mixProgress=captureProgress(m), refProgress=captureProgress(r);
+    recordMix.getProperties().set("captureProgress",mixProgress);
+    recordRef.getProperties().set("captureProgress",refProgress);
+    recordMix.setToggleState(recordingMix,juce::dontSendNotification);
+    recordRef.setToggleState(recordingRef,juce::dontSendNotification);
+    if(recordingMix)
+        recordMix.setButtonText(mixProgress>=.999f?"MIX READY · "+juce::String(m.seconds,1)+" s":"CAPTURING MIX "+juce::String(m.seconds,1)+" s");
+    else
+        recordMix.setButtonText(m.seconds>=RefMatchAudioProcessor::minimumMatchCaptureSeconds?"MIX READY ✓":"RECORD MIX");
+    if(recordingRef)
+        recordRef.setButtonText(refProgress>=.999f?"REF READY · "+juce::String(r.seconds,1)+" s":"CAPTURING REF "+juce::String(r.seconds,1)+" s");
+    else
+        recordRef.setButtonText(r.seconds>=RefMatchAudioProcessor::minimumMatchCaptureSeconds?"REF READY ✓":"RECORD REF");
+    const auto captureLabel=[](const LearnCapture::Profile& p,bool recording) {
+        if(recording)return juce::String(); // progress button already carries the live timing
+        if(p.ready)return "CAPTURED  "+juce::String(p.seconds,1)+" s"+(p.seconds>=RefMatchAudioProcessor::minimumMatchCaptureSeconds?"  ✓":"");
+        return juce::String();
+    };
+    mixProfile.setText(captureLabel(m,recordingMix),juce::dontSendNotification);
+    refProfile.setText(captureLabel(r,recordingRef),juce::dontSendNotification);
     const bool matched=processor.hasMatch();
     matchReady=processor.hasEnoughMatchData()&&processor.recording()==LearnCapture::none&&!matched;
     match.setEnabled(!matchAnalyzing&&(matchReady||matched));eqOn.setEnabled(matched);
@@ -523,18 +559,23 @@ void RefMatchAudioProcessorEditor::timerCallback()
     quickLoop.setButtonText(processor.getLoop().isEnabled()?"ON":"OFF");
     const bool processingAfter=processor.apvts.getRawParameterValue("processingafter")->load()>.5f;
     matchState.setToggleState(!processingAfter,juce::dontSendNotification);
-    matchState.setButtonText(processingAfter?"MATCH EQ ON":"BYPASSED");
+    matchState.setButtonText(processingAfter?"MATCHED":"ORIGINAL");
     matchState.setVisible(page==1 && matched);
     if(page==1 && matched) {
         if(nowMs>=nextResidualUpdateMs) {
             lastResidualDb=processor.getResidualTonalErrorDb();
             nextResidualUpdateMs=nowMs+250.0;
         }
-        residualStatus.setText(lastResidualDb>=0.0f?"Residual tonal error  "+juce::String(lastResidualDb,2)+" dB avg":"Residual tonal error unavailable",juce::dontSendNotification);
-        residualStatus.setVisible(true);
+        const auto residualText=lastResidualDb>=0.0f?"Residual tonal error: "+juce::String(lastResidualDb,2)+" dB average":"Residual tonal error unavailable";
+        match.setTooltip("Match captured tonal profiles. "+residualText);
+        residualStatus.setVisible(false); // advanced metric lives in the tooltip, not the primary workflow
     } else { residualStatus.setVisible(false); nextResidualUpdateMs=0.0; }
     lowType.setButtonText(lowType.getToggleState()?"SHELF":"BELL");highType.setButtonText(highType.getToggleState()?"SHELF":"BELL");
     const auto p=processor.getLoop().getPosition();position.setText(p.valid?timeText(p.seconds)+"  /  "+timeText(p.duration):"Position unavailable",juce::dontSendNotification);
+    const auto currentMedia=processor.getLoop().getPosition();
+    const auto referenceTooltip=(currentMedia.title.isNotEmpty()?currentMedia.title:currentMedia.track)
+        +(currentMedia.artist.isNotEmpty()?"\n"+currentMedia.artist:juce::String());
+    b.setTooltip(referenceTooltip);
     const auto playback=processor.getMediaController().playbackState();
     play.setToggleState(playback==1,juce::dontSendNotification);
     play.setButtonText("");
@@ -730,7 +771,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.43    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.44    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -787,10 +828,13 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
         g.setColour(violet.withAlpha(.8f));g.fillEllipse(635,91,16,16);
     }
 
+    const auto fullTitle=media.title.isNotEmpty()?media.title:"REFERENCE";
+    const auto shownTitle=fullTitle.length()>18?fullTitle.substring(0,17)+"...":fullTitle;
+    const auto shownArtist=media.artist.length()>20?media.artist.substring(0,19)+"...":media.artist;
     g.setColour(text);g.setFont(juce::Font(juce::FontOptions(11.5f,juce::Font::bold)));
-    g.drawText(media.title.isNotEmpty()?media.title:"REFERENCE",678,76,116,18,juce::Justification::left);
+    g.drawText(shownTitle,678,76,116,18,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(9.8f)));g.setColour(text.withAlpha(.78f));
-    g.drawText(media.artist,678,95,116,16,juce::Justification::left);
+    g.drawText(shownArtist,678,95,116,16,juce::Justification::left);
 
     // Keep the activity indicator, but integrate it into the metadata block
     // rather than leaving it floating above/beside the former waveform.
@@ -894,7 +938,7 @@ void RefMatchAudioProcessorEditor::resized()
     // Top source cards
     a.setBounds(58,78,48,42); b.setBounds(554,78,48,42); switchButton.setBounds(437,70,66,66);
     gain.setBounds(158,112,224,30);
-    autoGain.setBounds(210,138,178,26);
+    autoGain.setBounds(244,78,148,24);
     // Reference transport now occupies the former waveform row, directly under
     // title/artist, so the card reads as one compact player block.
     back.setBounds(678,118,42,28);
@@ -908,7 +952,7 @@ void RefMatchAudioProcessorEditor::resized()
     loopTab.setBounds(page==2?664:676,184,page==2?100:72,38);
     quickLoop.setBounds(page==2?776:760,184,page==2?66:82,38);
     eqOn.setBounds(854,184,82,38);
-    mixProfile.setBounds(54,219,146,18); refProfile.setBounds(232,219,146,18); matchState.setBounds(410,224,116,20); residualStatus.setBounds(538,222,210,22);
+    mixProfile.setBounds(54,219,146,18); refProfile.setBounds(232,219,146,18); matchState.setBounds(410,224,116,20); residualStatus.setBounds(0,0,0,0);
     eqTab.setBounds(44,184,120,36);
 
     // Graph controls

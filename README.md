@@ -1,4 +1,4 @@
-# RefMatch 0.5.43 — Match workflow + verification
+# RefMatch 0.5.44 — Match workflow + verification
 
 This release keeps the existing RefMatch audio path and focuses on the core Match EQ workflow.
 
@@ -11,3 +11,12 @@ This release keeps the existing RefMatch audio path and focuses on the core Matc
 - Existing Auto Gain, source switching, reference artwork/player, Loop and Tone EQ behaviour are otherwise preserved.
 
 See `BUILD-NOTES.md` for implementation notes and `RELEASE-SETUP.md` for the commercial release pipeline.
+
+
+### 0.5.44 workflow polish
+- Record MIX/REF buttons now fill to 100% at the 8-second Match-ready threshold while capture may continue.
+- STREAM reference capture arms before playback and starts a paused stream without restarting an already-playing source.
+- Auto Gain is a compact tertiary control in the A card.
+- Amount 0–200% is intentional: 100% is the full learned correction, >100% is deliberate over-match; Max Correction remains an absolute safety clamp.
+- ORIGINAL/MATCHED compare is labelled separately from the Match EQ ON/OFF toggle.
+- Residual tonal error is kept as advanced tooltip information rather than primary UI.

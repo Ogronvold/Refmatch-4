@@ -1,4 +1,4 @@
-# RefMatch 0.5.43
+# RefMatch 0.5.44
 
 - Action-row spacing normalized to 12 px between Record Mix, Record Ref, Match, Reset, Loop, quick toggle, and EQ controls.
 - MATCH remains horizontally centered on the same axis as the A/B switch.
@@ -122,3 +122,12 @@ Build note: full macOS AU/VST3 compilation must run on macOS because the project
 - Redesigned AUTO GAIN to match the requested compact mastering-style pill.
 - Added orange level icon, fixed AUTO GAIN label, divider, and separate result/countdown field.
 - Moved the control to the lower-right of the A card; DSP and 5-second matching behavior are unchanged.
+
+
+## 0.5.44
+- Progress-style MIX/REF capture buttons; 8 s = Match-ready fill, capture can continue.
+- STREAM REF capture starts paused playback only when needed and keeps capture armed before PLAY.
+- Compact Auto Gain moved to the top-right of A card.
+- ORIGINAL/MATCHED compare wording separated from Match EQ toggle semantics.
+- Residual tonal error moved out of primary UI into Match tooltip.
+- Amount 0–200% retained intentionally as over-match; Max Correction remains the absolute applied-curve clamp.
