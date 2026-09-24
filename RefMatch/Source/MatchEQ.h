@@ -9,7 +9,6 @@ public:
     void prepare(double sampleRate,int,int);
     void reset(); // Publish flat target; audio filter states remain audio-owned.
     void setAmount(float value) { amount.store(value); }
-    void setMaxCorrectionDb(float value) { limit.store(value); }
     void setTone(const std::array<float,6>& value) {const juce::SpinLock::ScopedLockType guard(lock);tone=value;}
     void setToneEnabled(bool enabled) {toneEnabled.store(enabled);}
     void setToneTypes(bool lowIsShelf, bool highIsShelf) { lowShelf.store(lowIsShelf); highShelf.store(highIsShelf); }
@@ -32,7 +31,7 @@ private:
     std::array<EQDesign::Coeff,stages> current{},target{},published{};
     EQDesign::Gains learned{};
     std::atomic<bool> toneEnabled{true}, lowShelf{true}, highShelf{true};
-    std::atomic<float> amount{.6f},limit{4},smoothing{.35f},midQ{.75f},matchLow{20.f},matchHigh{20000.f};
+    std::atomic<float> amount{1.f},smoothing{.35f},midQ{.75f},matchLow{20.f},matchHigh{20000.f};
     std::atomic<double> rate{48000};
     mutable juce::SpinLock lock;
     bool dirty=true;

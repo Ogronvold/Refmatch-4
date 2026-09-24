@@ -117,7 +117,7 @@ private:
     LearnCapture learning;
     juce::String learningStatus {"Record MIX and REF, then press MATCH  ·  Recommended: at least 8 s"};
     bool lastToneEnabled=true,lastLowShelf=true,lastHighShelf=true;
-    float lastAmount=-1,lastLimit=-1,lastSmooth=-1,lastMidQ=-1,lastMatchLow=-1,lastMatchHigh=-1;
+    float lastAmount=-1,lastSmooth=-1,lastMidQ=-1,lastMatchLow=-1,lastMatchHigh=-1,lastObservedSourceGain=0.f;
     std::array<float,6> lastTone{{-999,-999,-999,-999,-999,-999}};
     double lastEQRate=0;
 

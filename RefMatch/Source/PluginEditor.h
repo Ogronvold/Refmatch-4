@@ -47,14 +47,14 @@ private:
     juce::ComboBox graphRange;
     juce::Label residualStatus;
     float graphScale=24.f;
-    juce::Slider gain,amount,smooth,maxCorrection,midQ,loopZoom;
+    juce::Slider gain,amount,smooth,midQ,loopZoom;
     std::array<juce::Slider,6> tone;
     std::array<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>,6> toneAttachments;
     juce::TextEditor inTime,outTime;
     juce::TextButton back{"-5 s"},forward{"+5 s"},setIn{"SET IN"},setOut{"SET OUT"};
     LoopTimeline timeline;
     juce::Label status,mixProfile,refProfile,position;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> gainAttach,amountAttach,smoothAttach,maxCorrectionAttach,midQAttach;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> gainAttach,amountAttach,smoothAttach,midQAttach;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> eqAttach,toneOnAttach,lowShelfAttach,highShelfAttach;
     juce::TooltipWindow tips{this,650};
     juce::String message;

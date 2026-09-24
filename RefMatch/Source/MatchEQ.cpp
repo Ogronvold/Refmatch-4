@@ -54,7 +54,7 @@ EQDesign::Coeff MatchEQ::toneCoeff(int band,double sr,float gain,float freq) con
 void MatchEQ::refresh()
 {
     const auto sr=rate.load();
-    auto gains=EQDesign::scaled(getGains(),amount.load(),limit.load(),sr);
+    auto gains=EQDesign::scaled(getGains(),amount.load());
     for(int b=0;b<EQDesign::bands;++b)gains[b]*=matchWeight(EQDesign::centre(b));
     std::array<EQDesign::Coeff,stages> coeff{};
     for(int b=0;b<EQDesign::bands;++b)coeff[b]=EQDesign::peak(sr,EQDesign::centre(b),gains[b]);
@@ -88,7 +88,7 @@ void MatchEQ::process(juce::AudioBuffer<float>& buffer)
 }
 std::vector<float> MatchEQ::getMatchOnlyCurveDb(float displayAmount) const
 {
-    const auto sr=rate.load();auto gains=EQDesign::scaled(getGains(),displayAmount<0?amount.load():displayAmount,limit.load(),sr);
+    const auto sr=rate.load();auto gains=EQDesign::scaled(getGains(),displayAmount<0?amount.load():displayAmount);
     for(int b=0;b<EQDesign::bands;++b)gains[b]*=matchWeight(EQDesign::centre(b));
     std::vector<float> result(180);
     for(int i=0;i<180;++i) {

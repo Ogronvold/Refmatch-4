@@ -46,8 +46,9 @@ int main()
     require(maximum>.5,"distinct recorded spectra produce nonflat EQ");
     eq.prepare(sr,512,2);require(eq.getGains()==learned,"prepare preserves learned match");
     // Exercise actual audio processing, not just a displayed target curve.
+    // Amount is the only Match EQ strength control and is clamped to 0-100%.
     EQDesign::Gains one{};one[10]=3;
-    eq.setAmount(1);eq.setMaxCorrectionDb(.5f);eq.restoreGains(one);
+    eq.setAmount(1);eq.restoreGains(one);
     const double frequency=EQDesign::centre(10);double inputEnergy=0,outputEnergy=0;
     for(int block=0;block<200;++block) {
         for(int i=0;i<512;++i)for(int ch=0;ch<2;++ch)mix.setSample(ch,i,float(.1*std::sin(2*juce::MathConstants<double>::pi*frequency*(block*512+i)/sr)));
@@ -57,29 +58,18 @@ int main()
         if(block>=100)for(int i=0;i<512;++i)outputEnergy+=mix.getSample(0,i)*mix.getSample(0,i);
     }
     const double measured=10*std::log10(outputEnergy/inputEnergy);
-    require(std::abs(measured-.5)<.15,"Max Correction limits the audible match response");
-    // Max Correction is the final safety ceiling. Even an aggressive Amount must
-    // never push the applied Match EQ past the selected absolute limit.
-    eq.setAmount(.5f);eq.refresh();
-    float limitedHalfPeak=0;for(auto db:eq.getCurveDb())limitedHalfPeak=std::max(limitedHalfPeak,std::abs(db));
-    require(limitedHalfPeak<=.55f,"Max Correction caps the applied curve at lower Amount values");
-    eq.setAmount(2.f);eq.refresh();
-    float limitedDoublePeak=0;for(auto db:eq.getCurveDb())limitedDoublePeak=std::max(limitedDoublePeak,std::abs(db));
-    require(limitedDoublePeak<=.55f,"Max Correction remains an absolute ceiling at 200 percent Amount");
-    eq.setMaxCorrectionDb(12.f);eq.refresh();
+    require(std::abs(measured-3.0)<.18,"100 percent Amount applies the full learned correction");
     const auto fullScaleCurve=eq.getCurveDb(1.f);
     eq.setAmount(.5f);const auto halfCurve=eq.getCurveDb();
     require(eq.getCurveDb(1.f)==fullScaleCurve,"graph full-scale response does not change with Amount");
     eq.setAmount(.75f);const auto threeQuarterCurve=eq.getCurveDb();
     eq.setAmount(1.f);const auto fullCurve=eq.getCurveDb();
     float halfMax=0,threeQuarterMax=0,fullMax=0;
-    for(size_t i=0;i<fullCurve.size();++i){halfMax=std::max(halfMax,halfCurve[i]);threeQuarterMax=std::max(threeQuarterMax,threeQuarterCurve[i]);fullMax=std::max(fullMax,fullCurve[i]);}
+    for(size_t i=0;i<fullCurve.size();++i){halfMax=std::max(halfMax,std::abs(halfCurve[i]));threeQuarterMax=std::max(threeQuarterMax,std::abs(threeQuarterCurve[i]));fullMax=std::max(fullMax,std::abs(fullCurve[i]));}
     require(halfMax<threeQuarterMax && threeQuarterMax<fullMax,"applied graph continues moving from 50 through 75 to 100 percent");
-    eq.setAmount(1.5f);const auto oneFiftyCurve=eq.getCurveDb();
-    eq.setAmount(2.f);const auto twoHundredCurve=eq.getCurveDb();
-    float oneFiftyMax=0,twoHundredMax=0;
-    for(size_t i=0;i<twoHundredCurve.size();++i){oneFiftyMax=std::max(oneFiftyMax,std::abs(oneFiftyCurve[i]));twoHundredMax=std::max(twoHundredMax,std::abs(twoHundredCurve[i]));}
-    require(oneFiftyMax>fullMax && twoHundredMax>oneFiftyMax,"Amount can deliberately over-match from 100 through 200 percent");
+    require(std::abs(halfMax/fullMax-.5f)<.08f,"50 percent Amount is approximately half of the full correction");
+    eq.setAmount(1.5f);const auto clampedAbove=eq.getCurveDb();
+    require(clampedAbove==fullCurve,"Amount above 100 percent clamps to the full correction");
     eq.setAmount(0);eq.refresh();
     for(int block=0;block<100;++block){mix.clear();eq.process(mix);}
     for(int i=0;i<512;++i)mix.setSample(0,i,float(.1*std::sin(i*.2)));

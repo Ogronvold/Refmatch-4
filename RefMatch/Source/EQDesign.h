@@ -72,21 +72,13 @@ inline Gains fit(const Gains& mix,const Gains& ref,double sr,double smoothing)
     }
     return gains;
 }
-inline Gains scaled(Gains gains,double amount,double limit,double sr)
+inline Gains scaled(Gains gains,double amount)
 {
-    // Amount scales the learned correction from 0-200%. Max Correction is the
-    // final safety ceiling, so no applied match curve can exceed the selected
-    // dB limit even when Amount is above 100%.
-    const double wet=std::clamp(amount,0.,2.);
+    // Amount is the only Match EQ strength control: 0% = dry learned curve,
+    // 100% = the full calculated correction. Values are always clamped to 0-100%.
+    const double wet=std::clamp(amount,0.,1.);
     for(auto& g:gains)g*=wet;
-    double maximum=0;
-    for(int i=0;i<160;++i) {
-        const double hz=20*std::pow(std::min(20000.,sr*.45)/20.,i/159.);
-        double db=0;for(int b=0;b<bands;++b)db+=response(peak(sr,centre(b),gains[b]),hz,sr);
-        maximum=std::max(maximum,std::abs(db));
-    }
-    const double safeLimit=std::max(0.0,limit);
-    if(maximum>safeLimit && maximum>0.0)for(auto& g:gains)g*=safeLimit/maximum;
     return gains;
 }
+
 }
