@@ -1,6 +1,6 @@
-# RefMatch 0.5.46 — Capture state polish
+# RefMatch 0.5.47 — Capture state polish
 
-## 0.5.46 capture buttons
+## 0.5.47 capture buttons
 - 0–8 s capture now fills the Record Mix/Record Ref button itself from left to right.
 - Live capture text reads `LISTENING...  x.x s`.
 - At 8 s the button switches to a stable `MIX READY ✓` / `REF READY ✓` completed state without stopping capture.
