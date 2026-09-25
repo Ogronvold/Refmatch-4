@@ -214,16 +214,24 @@ void RefMatchLookAndFeel::drawButtonText(juce::Graphics& g,juce::TextButton& but
         const auto c=text.withAlpha(down?.68f:over?1.f:.90f);
         const float x=r.getX()+16.f, cy=r.getCentreY();
         g.setColour(c);
-        // Simple circular reset arrow.
+
+        // Compact single-arrow reset mark. Keep the arc deliberately open so
+        // it reads as "return to start" rather than browser refresh/repeat.
         juce::Path arc;
-        arc.addCentredArc(x,cy,7.f,7.f,0.f,0.45f,juce::MathConstants<float>::twoPi-0.72f,true);
-        g.strokePath(arc,juce::PathStrokeType(1.5f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+        constexpr float radius = 7.2f;
+        constexpr float startAngle = -2.72f;
+        constexpr float endAngle   =  1.68f;
+        arc.addCentredArc(x,cy,radius,radius,0.f,startAngle,endAngle,true);
+        g.strokePath(arc,juce::PathStrokeType(1.65f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+
+        // Small integrated arrowhead at the upper-left end of the arc.
         juce::Path head;
-        head.startNewSubPath(x-5.8f,cy-5.6f);
-        head.lineTo(x-9.0f,cy-5.0f);
-        head.lineTo(x-6.7f,cy-2.6f);
+        head.startNewSubPath(x-6.55f,cy-3.45f);
+        head.lineTo(x-9.15f,cy-5.75f);
+        head.lineTo(x-5.35f,cy-6.15f);
         head.closeSubPath();
         g.fillPath(head);
+
         g.setFont(juce::Font(juce::FontOptions(11.f,juce::Font::bold)));
         g.drawText(button.getButtonText(),juce::Rectangle<float>(x+13.f,r.getY(),r.getRight()-(x+16.f),r.getHeight()),juce::Justification::centredLeft);
         return;
