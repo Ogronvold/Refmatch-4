@@ -74,9 +74,9 @@ inline Gains fit(const Gains& mix,const Gains& ref,double sr,double smoothing)
 }
 inline Gains scaled(Gains gains,double amount)
 {
-    // Amount is the only Match EQ strength control: 0% = dry learned curve,
-    // 100% = the full calculated correction. Values are always clamped to 0-100%.
-    const double wet=std::clamp(amount,0.,1.);
+    // Amount is the only Match EQ strength control: 0% = no learned correction,
+    // 100% = the full calculated correction, 200% = intentional over-match.
+    const double wet=std::clamp(amount,0.,2.);
     for(auto& g:gains)g*=wet;
     return gains;
 }

@@ -1,6 +1,6 @@
-# RefMatch 0.5.48 — Capture state polish
+# RefMatch 0.5.49 — Capture state polish
 
-## 0.5.48 capture buttons
+## 0.5.49 capture buttons
 - 0–8 s capture now fills the Record Mix/Record Ref button itself from left to right.
 - Live capture text reads `LISTENING...  x.x s`.
 - At 8 s the button switches to a stable `MIX READY ✓` / `REF READY ✓` completed state without stopping capture.
@@ -24,11 +24,11 @@ See `BUILD-NOTES.md` for implementation notes and `RELEASE-SETUP.md` for the com
 - Record MIX/REF buttons now fill to 100% at the 8-second Match-ready threshold while capture may continue.
 - STREAM reference capture arms before playback and starts a paused stream without restarting an already-playing source.
 - Auto Gain is a compact tertiary control in the A card.
-- Amount is intentionally 0–100% and is the only Match EQ strength control: 0% = no learned correction, 100% = the full calculated correction.
+- Amount is intentionally 0–200% and is the only Match EQ strength control: 0% = no learned correction, 100% = the full calculated correction, 200% = intentional over-match.
 - ORIGINAL/MATCHED compare is labelled separately from the Match EQ ON/OFF toggle.
 - Residual tonal error is kept as advanced tooltip information rather than primary UI.
 
 ### 0.5.45 cleanup
 - Removed Max Correction from the public parameter set and UI.
-- Amount is clamped to 0–100% everywhere, including legacy state migration.
+- Amount is clamped to 0–200% everywhere, including restored project state.
 - Cleaned Match EQ states, UTF-8 labels, Loop/Match EQ labeling, Tone-off dimming, and stale artwork handling.

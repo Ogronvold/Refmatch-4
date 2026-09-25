@@ -132,7 +132,7 @@ int main()
     const auto half=EQDesign::scaled(fitted,.5), full=EQDesign::scaled(fitted,1.0), above=EQDesign::scaled(fitted,2.0);
     for(int i=0;i<EQDesign::bands;++i) {
         check(std::abs(half[i]-full[i]*.5)<1.e-9,"Amount scales learned correction linearly");
-        check(std::abs(above[i]-full[i])<1.e-9,"Amount clamps at 100 percent");
+        check(std::abs(above[i]-full[i]*2.0)<1.e-9,"Amount supports intentional 200 percent over-match");
     }
     std::cout << "PASS: fade endpoints, continuity, sample rates, reversal, capture failure and recovery\n";
 }

@@ -225,7 +225,7 @@ void RefMatchAudioProcessor::timerCallback()
     const float matchHigh=apvts.getRawParameterValue("matchhigh")->load();
     if(matchLow!=lastMatchLow || matchHigh!=lastMatchHigh){lastMatchLow=matchLow;lastMatchHigh=matchHigh;toneChanged=true;matchEQ.setMatchRange(matchLow,matchHigh);}
     if(toneChanged)matchEQ.refresh();
-    const float amount=juce::jlimit(0.0f,1.0f,apvts.getRawParameterValue("matchamount")->load()/100.f);
+    const float amount=juce::jlimit(0.0f,2.0f,apvts.getRawParameterValue("matchamount")->load()/100.f);
     if(amount!=lastAmount || lastEQRate!=currentSampleRate) {
         lastAmount=amount;lastEQRate=currentSampleRate;
         matchEQ.setAmount(amount);matchEQ.refresh();
@@ -276,7 +276,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout RefMatchAudioProcessor::crea
         "sourcegain", "Mix Gain", juce::NormalisableRange<float>(-24.0f, 24.0f, 0.1f), 0.0f));
     params.push_back(std::make_unique<juce::AudioParameterBool>("matchenabled", "Match EQ", false));
     params.push_back(std::make_unique<juce::AudioParameterFloat>(
-        "matchamount", "Match Amount", juce::NormalisableRange<float>(0.0f, 100.0f, 0.1f), 100.0f));
+        "matchamount", "Match Amount", juce::NormalisableRange<float>(0.0f, 200.0f, 0.1f), 100.0f));
     params.push_back(std::make_unique<juce::AudioParameterBool>("bypass", "Bypass", false));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("smooth","Smooth",juce::NormalisableRange<float>(0,100,.1f),35));
     const std::array<std::pair<float,float>,3> toneRanges{{{30.f,300.f},{200.f,6000.f},{3000.f,20000.f}}};
@@ -511,7 +511,7 @@ void RefMatchAudioProcessor::recalculateMatch()
         }return result;
     };
     matchEQ.setSmoothing(apvts.getRawParameterValue("smooth")->load()/100.f);
-    matchEQ.setAmount(juce::jlimit(0.0f,1.0f,apvts.getRawParameterValue("matchamount")->load()/100.f));
+    matchEQ.setAmount(juce::jlimit(0.0f,2.0f,apvts.getRawParameterValue("matchamount")->load()/100.f));
     matchEQ.setMatchRange(apvts.getRawParameterValue("matchlow")->load(),apvts.getRawParameterValue("matchhigh")->load());
     matchEQ.setToneTypes(apvts.getRawParameterValue("tone0shelf")->load()>.5f,apvts.getRawParameterValue("tone2shelf")->load()>.5f);
     matchEQ.setMidQ(apvts.getRawParameterValue("tone1q")->load());
@@ -620,14 +620,14 @@ void RefMatchAudioProcessor::setStateInformation(const void* data, int size)
             const auto id=child.getProperty("id").toString();
             if(id=="reference") child.setProperty("value",0.0f,nullptr);
             if(id=="matchamount") {
-                const float value=juce::jlimit(0.0f,100.0f,float(child.getProperty("value",100.0f)));
+                const float value=juce::jlimit(0.0f,200.0f,float(child.getProperty("value",100.0f)));
                 child.setProperty("value",value,nullptr);
             }
             if(id=="maxcorrection") state.removeChild(i,nullptr);
         }
         apvts.replaceState(state);
         if(auto* amountParam=apvts.getParameter("matchamount")) {
-            const float value=juce::jlimit(0.0f,100.0f,apvts.getRawParameterValue("matchamount")->load());
+            const float value=juce::jlimit(0.0f,200.0f,apvts.getRawParameterValue("matchamount")->load());
             amountParam->setValueNotifyingHost(amountParam->convertTo0to1(value));
         }
         EQDesign::Gains gains{};

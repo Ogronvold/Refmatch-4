@@ -1,4 +1,4 @@
-# RefMatch 0.5.48
+# RefMatch 0.5.49
 
 - Action-row spacing normalized to 12 px between Record Mix, Record Ref, Match, Reset, Loop, quick toggle, and EQ controls.
 - MATCH remains horizontally centered on the same axis as the A/B switch.
@@ -130,16 +130,16 @@ Build note: full macOS AU/VST3 compilation must run on macOS because the project
 - Compact Auto Gain moved to the top-right of A card.
 - ORIGINAL/MATCHED compare wording separated from Match EQ toggle semantics.
 - Residual tonal error moved out of primary UI into Match tooltip.
-- Amount is now 0–100% and is the sole Match EQ strength control. Max Correction has been removed.
+- Amount is now 0–200% and is the sole Match EQ strength control. Max Correction remains removed.
 
 ## 0.5.45 cleanup
 - Removed Max Correction parameter/UI/DSP clamp.
-- Amount clamps to 0–100%, including restored legacy projects.
+- Amount clamps to 0–200%, including restored project state.
 - READY states are visually quieter; Match remains the primary workflow action.
 - Fixed UTF-8 UI strings and clarified Loop / Match EQ / Tone states.
 
 
-## 0.5.48
+## 0.5.49
 - Capture-button visual state redesign only.
 - 0–8 s integrated progress fill with `LISTENING...` live time.
 - >=8 s stable READY state while capture can continue.

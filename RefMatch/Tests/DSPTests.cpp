@@ -46,7 +46,7 @@ int main()
     require(maximum>.5,"distinct recorded spectra produce nonflat EQ");
     eq.prepare(sr,512,2);require(eq.getGains()==learned,"prepare preserves learned match");
     // Exercise actual audio processing, not just a displayed target curve.
-    // Amount is the only Match EQ strength control and is clamped to 0-100%.
+    // Amount is the only Match EQ strength control and intentionally supports 0-200%.
     EQDesign::Gains one{};one[10]=3;
     eq.setAmount(1);eq.restoreGains(one);
     const double frequency=EQDesign::centre(10);double inputEnergy=0,outputEnergy=0;
@@ -68,8 +68,11 @@ int main()
     for(size_t i=0;i<fullCurve.size();++i){halfMax=std::max(halfMax,std::abs(halfCurve[i]));threeQuarterMax=std::max(threeQuarterMax,std::abs(threeQuarterCurve[i]));fullMax=std::max(fullMax,std::abs(fullCurve[i]));}
     require(halfMax<threeQuarterMax && threeQuarterMax<fullMax,"applied graph continues moving from 50 through 75 to 100 percent");
     require(std::abs(halfMax/fullMax-.5f)<.08f,"50 percent Amount is approximately half of the full correction");
-    eq.setAmount(1.5f);const auto clampedAbove=eq.getCurveDb();
-    require(clampedAbove==fullCurve,"Amount above 100 percent clamps to the full correction");
+    eq.setAmount(2.0f);const auto doubleCurve=eq.getCurveDb();
+    float doubleMax=0;for(auto db:doubleCurve)doubleMax=std::max(doubleMax,std::abs(db));
+    require(std::abs(doubleMax/fullMax-2.0f)<.12f,"200 percent Amount applies approximately double the full correction");
+    eq.setAmount(2.5f);const auto clampedAbove=eq.getCurveDb();
+    require(clampedAbove==doubleCurve,"Amount above 200 percent clamps to 200 percent");
     eq.setAmount(0);eq.refresh();
     for(int block=0;block<100;++block){mix.clear();eq.process(mix);}
     for(int i=0;i<512;++i)mix.setSample(0,i,float(.1*std::sin(i*.2)));
