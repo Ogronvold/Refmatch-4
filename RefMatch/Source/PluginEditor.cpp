@@ -431,6 +431,11 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     quickLoop.setColour(juce::ToggleButton::tickColourId,violet);eqOn.setColour(juce::ToggleButton::tickColourId,violet);toneOn.setColour(juce::ToggleButton::tickColourId,violet);
     quickLoop.setTooltip("Loop playback on/off. It is visually grouped with the LOOP editor button.");
     eqTab.getProperties().set("dualAccent",true);loopTab.getProperties().set("dualAccent",true);
+    // Keep LOOP text light when the tab is active. The global active TextButton
+    // text colour is dark for bright filled actions, but LOOP uses a dark panel
+    // with a violet outline/glow, so dark text loses contrast.
+    loopTab.setColour(juce::TextButton::textColourOnId,text);
+    loopTab.setColour(juce::TextButton::textColourOffId,text);
     eqTab.getProperties().set("glow",true);loopTab.getProperties().set("glow",true);
     toneOnAttach=std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(p.apvts,"toneenabled",toneOn);
     toneOn.setTooltip("Bypass only the three Tone bands. Keeps their settings and leaves Match EQ active.");
@@ -473,7 +478,8 @@ void RefMatchAudioProcessorEditor::setPage(int value)
     // Keep the full action bar visible in both views. Opening LOOP should feel
     // like the section expands below the toolbar, not like navigating away to
     // a different toolbar. This also keeps MATCHED / capture state visible.
-    for(auto* c:std::initializer_list<juce::Component*>{&recordMix,&recordRef,&match,&reset,&autoGain,&eqOn,&mixProfile,&refProfile})c->setVisible(true);
+    for(auto* c:std::initializer_list<juce::Component*>{&recordMix,&recordRef,&match,&reset,&autoGain,&mixProfile,&refProfile})c->setVisible(true);
+    eqOn.setVisible(false);
     for(auto* c:std::initializer_list<juce::Component*>{&amount,&smooth,&toneOn,&graphRange,&toneReset,&lowType,&highType,&midQ})c->setVisible(main);
     toneButton.setVisible(false);
     for(auto& control:tone)control.setVisible(main);
@@ -486,7 +492,7 @@ void RefMatchAudioProcessorEditor::setPage(int value)
     loopTab.getProperties().set("closeLoopIcon",page==2);
     loopTab.setVisible(true);
     quickLoop.setVisible(true);
-    eqOn.setVisible(true);
+    eqOn.setVisible(false);
 
     setSize(960,page==1?650:560);
     resized();repaint();
@@ -1001,7 +1007,7 @@ void RefMatchAudioProcessorEditor::resized()
     // preserving MATCH on the same horizontal centre as the A/B switch.
     loopTab.setBounds(page==2?664:676,184,page==2?100:72,38);
     quickLoop.setBounds(page==2?764:748,184,66,38);
-    eqOn.setBounds(826,184,110,38);
+    eqOn.setBounds(0,0,0,0);
     mixProfile.setBounds(54,219,146,18); refProfile.setBounds(232,219,146,18); matchState.setBounds(410,224,116,20); residualStatus.setBounds(0,0,0,0);
     eqTab.setBounds(44,184,120,36);
 
