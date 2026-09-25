@@ -215,26 +215,36 @@ void RefMatchLookAndFeel::drawButtonText(juce::Graphics& g,juce::TextButton& but
         const float x=r.getX()+16.f, cy=r.getCentreY();
         g.setColour(c);
 
-        // Minimal single-arrow "return" mark: intentionally not circular, so
-        // RESET cannot be mistaken for Loop or browser refresh.
-        juce::Path returnPath;
-        returnPath.startNewSubPath(x+7.0f, cy+5.2f);
-        returnPath.cubicTo(x+7.0f, cy-1.0f,
-                           x+3.1f, cy-5.2f,
-                           x-3.3f, cy-5.2f);
-        returnPath.lineTo(x-6.4f, cy-5.2f);
-        g.strokePath(returnPath,juce::PathStrokeType(1.65f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+        // Single clockwise reset arrow, matching the familiar near-complete
+        // circular reset mark: open on the right, rounded tail at lower-right,
+        // and a clear triangular arrow head at upper-right.
+        juce::Path arc;
+        arc.startNewSubPath(x+7.2f, cy+4.1f);          // rounded lower-right tail
+        arc.cubicTo(x+5.2f, cy+8.4f,
+                    x+0.7f, cy+10.5f,
+                    x-4.0f, cy+9.0f);
+        arc.cubicTo(x-8.4f, cy+7.6f,
+                    x-10.4f, cy+3.2f,
+                    x-9.1f, cy-1.1f);
+        arc.cubicTo(x-7.8f, cy-5.5f,
+                    x-3.9f, cy-8.1f,
+                    x+0.6f, cy-8.1f);
+        arc.cubicTo(x+3.9f, cy-8.1f,
+                    x+6.7f, cy-6.6f,
+                    x+8.4f, cy-4.4f);
+        g.strokePath(arc, juce::PathStrokeType(2.0f,
+                                              juce::PathStrokeType::curved,
+                                              juce::PathStrokeType::rounded));
 
-        // Small left-pointing head, aligned with the open return stroke.
         juce::Path head;
-        head.startNewSubPath(x-6.0f,cy-8.4f);
-        head.lineTo(x-9.3f,cy-5.2f);
-        head.lineTo(x-6.0f,cy-2.0f);
+        head.startNewSubPath(x+6.1f, cy-8.6f);
+        head.lineTo(x+10.9f, cy-8.9f);
+        head.lineTo(x+10.5f, cy-4.0f);
         head.closeSubPath();
         g.fillPath(head);
 
         g.setFont(juce::Font(juce::FontOptions(11.f,juce::Font::bold)));
-        g.drawText(button.getButtonText(),juce::Rectangle<float>(x+13.f,r.getY(),r.getRight()-(x+16.f),r.getHeight()),juce::Justification::centredLeft);
+        g.drawText(button.getButtonText(),juce::Rectangle<float>(x+14.f,r.getY(),r.getRight()-(x+17.f),r.getHeight()),juce::Justification::centredLeft);
         return;
     }
     if(bool(button.getProperties()["playerIcon"])) {
@@ -832,7 +842,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.49    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.54    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);

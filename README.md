@@ -1,4 +1,4 @@
-# RefMatch 0.5.49 — Capture state polish
+# RefMatch 0.5.54 — Reset icon refinement
 
 ## 0.5.49 capture buttons
 - 0–8 s capture now fills the Record Mix/Record Ref button itself from left to right.
