@@ -249,6 +249,32 @@ void RefMatchLookAndFeel::drawButtonText(juce::Graphics& g,juce::TextButton& but
         }
         return;
     }
+    if(bool(button.getProperties()["loopIcon"])) {
+        const auto r=button.getLocalBounds().toFloat();
+        const bool on=button.getToggleState();
+        const auto accent=button.findColour(juce::TextButton::buttonOnColourId);
+        const auto c=(on?accent:text).withAlpha(down?.68f:over?1.f:.94f);
+        const float cx=r.getCentreX(), cy=r.getCentreY();
+        const float radius=9.5f;
+
+        if(on)
+            glowRounded(g,{cx-radius-3.f,cy-radius-3.f,(radius+3.f)*2.f,(radius+3.f)*2.f},radius+3.f,accent,.20f);
+
+        g.setColour(c);
+        juce::Path arc;
+        // A bold, nearly full-circle clockwise arrow inspired by a classic
+        // reset/loop symbol. Leave a small gap at the upper-right for the head.
+        arc.addCentredArc(cx,cy,radius,radius,0.f,0.62f,juce::MathConstants<float>::twoPi-0.34f,true);
+        g.strokePath(arc,juce::PathStrokeType(2.35f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+
+        juce::Path head;
+        head.startNewSubPath(cx+6.1f,cy-8.1f);
+        head.lineTo(cx+11.2f,cy-9.4f);
+        head.lineTo(cx+10.2f,cy-4.1f);
+        head.closeSubPath();
+        g.fillPath(head);
+        return;
+    }
     if(bool(button.getProperties()["closeLoopIcon"])) {
         const auto r=button.getLocalBounds().toFloat();
         const auto c=text.withAlpha(down?.68f:over?1.f:.94f);
@@ -436,6 +462,7 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     // with a violet outline/glow, so dark text loses contrast.
     loopTab.setColour(juce::TextButton::textColourOnId,text);
     loopTab.setColour(juce::TextButton::textColourOffId,text);
+    loopTab.setTooltip("Open the loop editor. The circular arrow shows the loop control.");
     eqTab.getProperties().set("glow",true);loopTab.getProperties().set("glow",true);
     toneOnAttach=std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(p.apvts,"toneenabled",toneOn);
     toneOn.setTooltip("Bypass only the three Tone bands. Keeps their settings and leaves Match EQ active.");
@@ -488,8 +515,9 @@ void RefMatchAudioProcessorEditor::setPage(int value)
     for(auto* c:std::initializer_list<juce::Component*>{&inTime,&outTime,&setIn,&setOut})c->setVisible(false);
 
     eqTab.setVisible(false);
-    loopTab.setButtonText(page==2?"CLOSE LOOP":"LOOP");
+    loopTab.setButtonText(page==2?"CLOSE LOOP":"");
     loopTab.getProperties().set("closeLoopIcon",page==2);
+    loopTab.getProperties().set("loopIcon",page!=2);
     loopTab.setVisible(true);
     quickLoop.setVisible(true);
     eqOn.setVisible(false);
@@ -597,7 +625,7 @@ void RefMatchAudioProcessorEditor::timerCallback()
     quickLoop.setToggleState(processor.getLoop().isEnabled(),juce::dontSendNotification);
     quickLoop.setButtonText(processor.getLoop().isEnabled()?"ON":"OFF");
     loopTab.setToggleState(processor.getLoop().isEnabled(),juce::dontSendNotification);
-    if(page!=2) loopTab.setButtonText("LOOP");
+    if(page!=2) loopTab.setButtonText("");
     const bool processingAfter=processor.apvts.getRawParameterValue("processingafter")->load()>.5f;
     matchState.setToggleState(!processingAfter,juce::dontSendNotification);
     matchState.setButtonText(processingAfter?"HEAR MATCHED":"HEAR ORIGINAL");
