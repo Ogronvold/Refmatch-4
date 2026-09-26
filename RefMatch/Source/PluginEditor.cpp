@@ -897,7 +897,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.61    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.62    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -1115,7 +1115,7 @@ void RefMatchAudioProcessorEditor::resized()
 
     // Loop page uses the exact same toolbar geometry as the main page.
     // The LOOP button is highlighted via its toggle state while the section is open.
-    timeline.setBounds(48,258,868,170); position.setBounds(50,432,260,20); clearLoop.setBounds(800,222,116,28);
+    timeline.setBounds(48,258,868,170); position.setBounds(50,432,260,20); clearLoop.setBounds(800,228,116,26);
     zoomMinus.setBounds(116,456,32,28); loopZoom.setBounds(154,456,146,28); zoomPlus.setBounds(306,456,32,28);
     inTime.setBounds(0,0,0,0);setIn.setBounds(0,0,0,0);outTime.setBounds(0,0,0,0);setOut.setBounds(0,0,0,0);
     status.setBounds(46,getHeight()-26,868,20);
