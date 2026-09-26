@@ -1,3 +1,8 @@
+## 0.5.59
+
+- Shifted the completed Auto Gain divider/value slightly left for better right-side padding.
+- No DSP or workflow changes.
+
 ## 0.5.58
 - Auto Gain completed/active state now shows only `AUTO GAIN` in the pill.
 - Removed the inline dB value/divider from the Auto Gain pill; gain compensation remains visible in the main Gain readout.

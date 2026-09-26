@@ -199,14 +199,14 @@ void RefMatchLookAndFeel::drawButtonText(juce::Graphics& g,juce::TextButton& but
         }
         g.setColour(text.withAlpha(button.isEnabled()?(down?.72f:over?1.f:.94f):.56f));
         g.setFont(juce::Font(juce::FontOptions(9.8f,juce::Font::bold)));
-        const float dividerX = right.isNotEmpty() ? r.getRight()-44.f : r.getRight();
+        const float dividerX = right.isNotEmpty() ? r.getRight()-50.f : r.getRight();
         g.drawText(left,juce::Rectangle<float>(iconX+10.f,r.getY(),juce::jmax(28.f,dividerX-(iconX+12.f)),r.getHeight()),juce::Justification::centredLeft);
         if(right.isNotEmpty()) {
             g.setColour(line.brighter(.10f).withAlpha(.82f));
             g.fillRoundedRectangle(dividerX,r.getY()+6.f,1.2f,r.getHeight()-12.f,.6f);
             g.setColour(text.withAlpha(button.isEnabled()?.72f:.46f));
             g.setFont(juce::Font(juce::FontOptions(9.2f)));
-            g.drawText(right,juce::Rectangle<float>(dividerX+4.f,r.getY(),r.getRight()-dividerX-7.f,r.getHeight()),juce::Justification::centredRight);
+            g.drawText(right,juce::Rectangle<float>(dividerX+4.f,r.getY(),r.getRight()-dividerX-12.f,r.getHeight()),juce::Justification::centredRight);
         }
         return;
     }
@@ -842,7 +842,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.58    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.59    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
