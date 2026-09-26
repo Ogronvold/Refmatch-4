@@ -1,4 +1,4 @@
-## 0.5.57
+## 0.5.58
 - Auto Gain completed/active state now shows only `AUTO GAIN` in the pill.
 - Removed the inline dB value/divider from the Auto Gain pill; gain compensation remains visible in the main Gain readout.
 - Measuring progress and RETRY states are unchanged.
@@ -149,3 +149,6 @@ Build note: full macOS AU/VST3 compilation must run on macOS because the project
 - 0–8 s integrated progress fill with `LISTENING...` live time.
 - >=8 s stable READY state while capture can continue.
 - Continued capture timing moves to the small status line under the button.
+
+- Auto Gain completed-state now shows the selected compensation inside the pill (for example `AUTO GAIN | -4.5 dB`).
+- Completed Auto Gain pill widened slightly so the label and dB value fit without truncation.

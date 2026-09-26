@@ -652,7 +652,10 @@ void RefMatchAudioProcessorEditor::timerCallback()
         autoGain.getProperties().set("autoGainProgress",0.0f);
         const auto ag=processor.getAutoGainStatus();
         if (ag.startsWith("LEVEL MATCHED")) {
-            autoGain.setButtonText("AUTO GAIN");
+            // Completed state: keep the label readable and show the chosen
+            // compensation inside the pill as a compact secondary value.
+            const auto matchedDb = ag.fromFirstOccurrenceOf("LEVEL MATCHED", false, false).trim();
+            autoGain.setButtonText(matchedDb.isNotEmpty() ? "AUTO GAIN|" + matchedDb : "AUTO GAIN");
             autoGain.setToggleState(true,juce::dontSendNotification);
         } else {
             autoGain.setToggleState(false,juce::dontSendNotification);
@@ -839,7 +842,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.57    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.58    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -1011,7 +1014,7 @@ void RefMatchAudioProcessorEditor::resized()
     // Top source cards
     a.setBounds(58,78,48,42); b.setBounds(554,78,48,42); switchButton.setBounds(437,70,66,66);
     gain.setBounds(158,112,224,30);
-    autoGain.setBounds(282,78,110,22);
+    autoGain.setBounds(260,78,132,22);
     // Reference transport now occupies the former waveform row, directly under
     // title/artist, so the card reads as one compact player block.
     back.setBounds(678,118,42,28);
