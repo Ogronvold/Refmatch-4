@@ -1,3 +1,10 @@
+## 0.5.65
+
+- Removed the checkmark from the completed Match button.
+- Completed Match state now reads `MATCHED` only, avoiding the previous encoding/mojibake issue.
+- Updated visible plugin version and CMake project version to 0.5.65.
+- No DSP, workflow, parameter, Loop, Auto Gain, Tone, or graph behavior changes.
+
 ## 0.5.59
 
 - Shifted the completed Auto Gain divider/value slightly left for better right-side padding.
