@@ -53,6 +53,34 @@ RefMatchLookAndFeel::RefMatchLookAndFeel()
     setColour(juce::TextEditor::outlineColourId,line);
     setColour(juce::TextEditor::focusedOutlineColourId,cyan);
 }
+
+void RefMatchLookAndFeel::drawComboBox(juce::Graphics& g,int width,int height,bool isButtonDown,int,int,int,int,juce::ComboBox& box)
+{
+    auto r=juce::Rectangle<float>(0.f,0.f,float(width),float(height)).reduced(.75f);
+    const bool over=box.isMouseOverOrDragging();
+    const auto fill=panelRaised.withMultipliedBrightness(isButtonDown?.94f:over?1.07f:1.f);
+
+    if(over) glowRounded(g,r,6.f,violet,.055f);
+    g.setGradientFill(juce::ColourGradient(fill.brighter(.025f),r.getTopLeft(),fill.darker(.07f),r.getBottomRight(),false));
+    g.fillRoundedRectangle(r,6.f);
+    g.setColour(line.brighter(over?.10f:.03f).withAlpha(over?.88f:.72f));
+    g.drawRoundedRectangle(r,6.f,1.f);
+
+    // Small clean chevron instead of JUCE's default oversized arrow area.
+    const float cx=r.getRight()-13.f, cy=r.getCentreY();
+    juce::Path chevron;
+    chevron.startNewSubPath(cx-4.f,cy-2.f);
+    chevron.lineTo(cx,cy+2.f);
+    chevron.lineTo(cx+4.f,cy-2.f);
+    g.setColour(violet.withAlpha(over?1.f:.90f));
+    g.strokePath(chevron,juce::PathStrokeType(1.7f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+}
+
+juce::Font RefMatchLookAndFeel::getComboBoxFont(juce::ComboBox&)
+{
+    return juce::Font(juce::FontOptions(10.6f,juce::Font::bold));
+}
+
 void RefMatchLookAndFeel::drawButtonBackground(juce::Graphics& g,juce::Button& button,const juce::Colour& colour,bool over,bool down)
 {
     auto r=button.getLocalBounds().toFloat().reduced(.75f);
@@ -503,7 +531,8 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     eqTab.getProperties().set("glow",true);loopTab.getProperties().set("glow",true);
     toneOnAttach=std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(p.apvts,"toneenabled",toneOn);
     toneOn.setTooltip("Bypass only the three Tone bands. Keeps their settings and leaves Match EQ active.");
-    graphRange.addItem("±12 dB",12);graphRange.addItem("±24 dB",24);graphRange.addItem("±48 dB",48);graphRange.addItem("±96 dB",96);
+    const auto plusMinus=juce::String::charToString(0x00B1);
+    graphRange.addItem(plusMinus+"12 dB",12);graphRange.addItem(plusMinus+"24 dB",24);graphRange.addItem(plusMinus+"48 dB",48);graphRange.addItem(plusMinus+"96 dB",96);
     const int savedRange=int(p.apvts.state.getProperty("graphRange",12));
     graphScale=float(savedRange==12 || savedRange==24 || savedRange==48 || savedRange==96?savedRange:12);
     graphRange.setSelectedId(int(graphScale),juce::dontSendNotification);
@@ -897,7 +926,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.62    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.63    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -1104,7 +1133,7 @@ void RefMatchAudioProcessorEditor::resized()
     eqTab.setBounds(44,184,120,36);
 
     // Graph controls
-    amount.setBounds(118,446,278,34); smooth.setBounds(488,446,202,34); graphRange.setBounds(804,254,98,24);
+    amount.setBounds(118,446,278,34); smooth.setBounds(488,446,202,34); graphRange.setBounds(820,254,82,24);
 
     // Tone EQ
     toneButton.setBounds(0,0,0,0); toneOn.setBounds(60,514,112,24); toneReset.setButtonText("Reset All"); toneReset.setBounds(814,514,88,24);
