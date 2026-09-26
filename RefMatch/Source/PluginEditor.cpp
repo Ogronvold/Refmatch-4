@@ -493,7 +493,7 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     quickLoop.setTooltip("Loop playback on/off. It is visually grouped with the LOOP editor button.");
     eqTab.getProperties().set("dualAccent",true);loopTab.getProperties().set("dualAccent",true);
     loopTab.getProperties().set("loopGroupButton",true);
-    loopTab.getProperties().set("loopIcon",true);
+    loopTab.getProperties().set("loopIcon",false);
     // Keep LOOP text light when the tab is active. The global active TextButton
     // text colour is dark for bright filled actions, but LOOP uses a dark panel
     // with a violet outline/glow, so dark text loses contrast.
@@ -554,7 +554,7 @@ void RefMatchAudioProcessorEditor::setPage(int value)
     eqTab.setVisible(false);
     loopTab.setButtonText(page==2?"CLOSE LOOP":"LOOP");
     loopTab.getProperties().set("closeLoopIcon",page==2);
-    loopTab.getProperties().set("loopIcon",page!=2);
+    loopTab.getProperties().set("loopIcon",false);
     loopTab.setToggleState(page==2,juce::dontSendNotification);
     loopTab.setVisible(true);
     quickLoop.setVisible(true);
@@ -666,7 +666,7 @@ void RefMatchAudioProcessorEditor::timerCallback()
     if(page!=2) {
         loopTab.setButtonText("LOOP");
         loopTab.getProperties().set("closeLoopIcon",false);
-        loopTab.getProperties().set("loopIcon",true);
+        loopTab.getProperties().set("loopIcon",false);
     }
     const bool processingAfter=processor.apvts.getRawParameterValue("processingafter")->load()>.5f;
     matchState.setToggleState(!processingAfter,juce::dontSendNotification);
@@ -897,7 +897,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.60    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.61    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
