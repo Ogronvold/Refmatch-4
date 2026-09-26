@@ -148,6 +148,21 @@ void RefMatchLookAndFeel::drawButtonBackground(juce::Graphics& g,juce::Button& b
         return;
     }
 
+    if(bool(button.getProperties()["loopGroupButton"])) {
+        // LOOP is visually grouped with its ON/OFF toggle. The parent editor
+        // paints the shared container; this left segment only adds the active
+        // loop-menu highlight when the editor is open.
+        if(on) {
+            glowRounded(g,r,9.f,violet,.13f);
+            g.setGradientFill(juce::ColourGradient(violet.withAlpha(.20f),r.getTopLeft(),
+                                                   panelRaised.withAlpha(.96f),r.getBottomRight(),false));
+            g.fillRoundedRectangle(r,9.f);
+            g.setColour(violet.withAlpha(.92f));
+            g.drawRoundedRectangle(r,9.f,1.25f);
+        }
+        return;
+    }
+
     const bool softAction=bool(button.getProperties()["softAction"]);
     if((glow && visualOn) || visualOn) glowRounded(g,r,compact?6.f:8.f,dual?violet:colour,compact?.20f:.17f);
 
@@ -261,6 +276,33 @@ void RefMatchLookAndFeel::drawButtonText(juce::Graphics& g,juce::TextButton& but
         }
         return;
     }
+    if(bool(button.getProperties()["loopIcon"])) {
+        const auto r=button.getLocalBounds().toFloat();
+        const bool menuOpen=button.getToggleState();
+        const auto c=(menuOpen?violet:text).withAlpha(down?.70f:over?1.f:.92f);
+        const float cx=r.getX()+19.f, cy=r.getCentreY();
+        g.setColour(c);
+        // Compact two-arrow loop glyph, drawn as vectors so it scales cleanly.
+        juce::Path top,bottom;
+        top.startNewSubPath(cx-7.f,cy-3.f);
+        top.cubicTo(cx-6.f,cy-9.f,cx+4.f,cy-10.f,cx+8.f,cy-5.f);
+        top.lineTo(cx+8.f,cy-8.f);
+        top.lineTo(cx+12.f,cy-4.f);
+        top.lineTo(cx+7.f,cy-1.f);
+        bottom.startNewSubPath(cx+7.f,cy+3.f);
+        bottom.cubicTo(cx+6.f,cy+9.f,cx-4.f,cy+10.f,cx-8.f,cy+5.f);
+        bottom.lineTo(cx-8.f,cy+8.f);
+        bottom.lineTo(cx-12.f,cy+4.f);
+        bottom.lineTo(cx-7.f,cy+1.f);
+        g.strokePath(top,juce::PathStrokeType(1.9f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+        g.strokePath(bottom,juce::PathStrokeType(1.9f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+        g.setFont(juce::Font(juce::FontOptions(11.f,juce::Font::bold)));
+        g.setColour(text.withAlpha(down?.70f:over?1.f:.94f));
+        g.drawText(button.getButtonText(),
+                   juce::Rectangle<float>(r.getX()+38.f,r.getY(),r.getWidth()-42.f,r.getHeight()),
+                   juce::Justification::centredLeft);
+        return;
+    }
     if(bool(button.getProperties()["closeLoopIcon"])) {
         const auto r=button.getLocalBounds().toFloat();
         const auto c=text.withAlpha(down?.68f:over?1.f:.94f);
@@ -315,7 +357,11 @@ void RefMatchLookAndFeel::drawToggleButton(juce::Graphics& g,juce::ToggleButton&
         g.setColour(on?accent.withAlpha(.80f):muted.withAlpha(.45f));g.drawRoundedRectangle(pill,9.f,1.f);
         const float cx=on?pill.getRight()-9.f:pill.getX()+9.f;
         g.setColour(on?text:muted);g.fillEllipse(cx-5.5f,pill.getCentreY()-5.5f,11.f,11.f);
-        g.setFont(juce::Font(juce::FontOptions(11.f,juce::Font::bold)));g.setColour(text.withAlpha(down?.7f:over?1.f:.92f));
+        g.setFont(juce::Font(juce::FontOptions(11.f,juce::Font::bold)));
+        if(bool(button.getProperties()["loopGroupToggle"]))
+            g.setColour((on?accent:muted).withAlpha(down?.72f:over?1.f:(on?.96f:.86f)));
+        else
+            g.setColour(text.withAlpha(down?.7f:over?1.f:.92f));
         g.drawText(button.getButtonText(),juce::Rectangle<float>(pill.getRight()+8.f,r.getY(),std::max(0.f,r.getWidth()-pill.getWidth()-10.f),r.getHeight()),juce::Justification::centredLeft);
         return;
     }
@@ -442,9 +488,12 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     };
     matchState.setTooltip("Fast ORIGINAL / MATCHED comparison. This is not the Match EQ on/off switch.");
     quickLoop.getProperties().set("pillToggle",true);eqOn.getProperties().set("pillToggle",true);toneOn.getProperties().set("pillToggle",true);
+    quickLoop.getProperties().set("loopGroupToggle",true);
     quickLoop.setColour(juce::ToggleButton::tickColourId,violet);eqOn.setColour(juce::ToggleButton::tickColourId,violet);toneOn.setColour(juce::ToggleButton::tickColourId,violet);
     quickLoop.setTooltip("Loop playback on/off. It is visually grouped with the LOOP editor button.");
     eqTab.getProperties().set("dualAccent",true);loopTab.getProperties().set("dualAccent",true);
+    loopTab.getProperties().set("loopGroupButton",true);
+    loopTab.getProperties().set("loopIcon",true);
     // Keep LOOP text light when the tab is active. The global active TextButton
     // text colour is dark for bright filled actions, but LOOP uses a dark panel
     // with a violet outline/glow, so dark text loses contrast.
@@ -505,6 +554,8 @@ void RefMatchAudioProcessorEditor::setPage(int value)
     eqTab.setVisible(false);
     loopTab.setButtonText(page==2?"CLOSE LOOP":"LOOP");
     loopTab.getProperties().set("closeLoopIcon",page==2);
+    loopTab.getProperties().set("loopIcon",page!=2);
+    loopTab.setToggleState(page==2,juce::dontSendNotification);
     loopTab.setVisible(true);
     quickLoop.setVisible(true);
     eqOn.setVisible(false);
@@ -611,8 +662,12 @@ void RefMatchAudioProcessorEditor::timerCallback()
     quickLoop.setEnabled(processor.getLoop().hasRange());
     quickLoop.setToggleState(processor.getLoop().isEnabled(),juce::dontSendNotification);
     quickLoop.setButtonText(processor.getLoop().isEnabled()?"ON":"OFF");
-    loopTab.setToggleState(processor.getLoop().isEnabled(),juce::dontSendNotification);
-    if(page!=2) loopTab.setButtonText("LOOP");
+    loopTab.setToggleState(page==2,juce::dontSendNotification);
+    if(page!=2) {
+        loopTab.setButtonText("LOOP");
+        loopTab.getProperties().set("closeLoopIcon",false);
+        loopTab.getProperties().set("loopIcon",true);
+    }
     const bool processingAfter=processor.apvts.getRawParameterValue("processingafter")->load()>.5f;
     matchState.setToggleState(!processingAfter,juce::dontSendNotification);
     matchState.setButtonText(processingAfter?"HEAR MATCHED":"HEAR ORIGINAL");
@@ -842,7 +897,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.59    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.60    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -913,6 +968,23 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     // Keep the activity indicator, but integrate it into the metadata block
     // rather than leaving it floating above/beside the former waveform.
     drawSignalActivity(796.f,97.f,processor.getReferencePeakDb(),violet);
+
+    // Shared LOOP + ON/OFF control. The two child controls sit inside one
+    // rounded container with a divider, matching the three-state mockup:
+    // OFF, ON, and loop-menu-open.
+    {
+        const float gx=page==2?664.f:676.f;
+        const float gw=page==2?184.f:172.f;
+        const juce::Rectangle<float> group(gx,184.f,gw,38.f);
+        g.setGradientFill(juce::ColourGradient(panelRaised.withAlpha(.96f),group.getTopLeft(),
+                                               panel.darker(.12f),group.getBottomRight(),false));
+        g.fillRoundedRectangle(group,9.f);
+        g.setColour(line.withAlpha(.82f));
+        g.drawRoundedRectangle(group,9.f,1.f);
+        const float dividerX=page==2?776.f:760.f;
+        g.setColour(line.withAlpha(.72f));
+        g.fillRoundedRectangle(dividerX,191.f,1.f,24.f,.5f);
+    }
 
     if(page==1) {
         // Main graph card
@@ -1025,8 +1097,8 @@ void RefMatchAudioProcessorEditor::resized()
     recordMix.setBounds(36,184,166,38); recordRef.setBounds(214,184,166,38); match.setBounds(392,184,156,38); reset.setBounds(560,184,page==2?92:104,38);
     // Keep a consistent 12 px gap across the complete action row while
     // preserving MATCH on the same horizontal centre as the A/B switch.
-    loopTab.setBounds(page==2?664:676,184,page==2?100:72,38);
-    quickLoop.setBounds(page==2?764:748,184,66,38);
+    loopTab.setBounds(page==2?664:676,184,page==2?112:84,38);
+    quickLoop.setBounds(page==2?780:764,184,page==2?68:84,38);
     eqOn.setBounds(0,0,0,0);
     mixProfile.setBounds(54,219,146,18); refProfile.setBounds(232,219,146,18); matchState.setBounds(410,224,116,20); residualStatus.setBounds(0,0,0,0);
     eqTab.setBounds(44,184,120,36);
