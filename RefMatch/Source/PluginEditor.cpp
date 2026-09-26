@@ -124,12 +124,25 @@ void RefMatchLookAndFeel::drawButtonBackground(juce::Graphics& g,juce::Button& b
 
     if(bool(button.getProperties()["autoGainPill"])) {
         const auto accent=cyan;
-        if(over || on) glowRounded(g,r,10.f,accent,on?.15f:.07f);
+        const bool measuring=bool(button.getProperties()["autoGainMeasuring"]);
+        const float progress=juce::jlimit(0.0f,1.0f,float(button.getProperties()["autoGainProgress"]));
+        if(over || on || measuring) glowRounded(g,r,10.f,accent,measuring?.10f:(on?.15f:.07f));
         const auto fill=panelRaised.withMultipliedBrightness(down?.92f:over?1.06f:1.f);
         g.setGradientFill(juce::ColourGradient(fill.brighter(.025f),r.getTopLeft(),fill.darker(.085f),r.getBottomRight(),false));
         g.fillRoundedRectangle(r,10.f);
-        g.setColour((on?accent:line.brighter(.04f)).withAlpha(on?.95f:.88f));
-        g.drawRoundedRectangle(r,10.f,on?1.35f:1.1f);
+
+        // During Auto Gain measurement, use the pill itself as the progress indicator.
+        // This mirrors the RECORD MIX / RECORD REF interaction and avoids a cramped timer.
+        if(measuring && progress>0.001f) {
+            juce::Graphics::ScopedSaveState save(g);
+            g.reduceClipRegion(r.withWidth(r.getWidth()*progress).getSmallestIntegerContainer());
+            g.setGradientFill(juce::ColourGradient(accent.brighter(.08f).withAlpha(.78f),r.getTopLeft(),
+                                                   accent.darker(.26f).withAlpha(.48f),r.getTopRight(),false));
+            g.fillRoundedRectangle(r,10.f);
+        }
+
+        g.setColour(((on || measuring)?accent:line.brighter(.04f)).withAlpha((on || measuring)?.95f:.88f));
+        g.drawRoundedRectangle(r,10.f,(on || measuring)?1.35f:1.1f);
         g.setColour(juce::Colours::white.withAlpha(.025f));
         g.drawRoundedRectangle(r.reduced(1.f),9.f,.8f);
         return;
@@ -392,6 +405,8 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     for(auto* button:{&play,&recordMix,&recordRef,&match,&reset,&autoGain})button->getProperties().set("glow",true);
     for(auto* button:{&play,&back,&forward,&reset,&loopTab,&toneReset})button->getProperties().set("softAction",true);
     autoGain.getProperties().set("autoGainPill",true);
+    autoGain.getProperties().set("autoGainMeasuring",false);
+    autoGain.getProperties().set("autoGainProgress",0.0f);
     match.getProperties().set("dualAccent",true);match.getProperties().set("forceDual",true);
     recordMix.getProperties().set("recordIcon",true);recordRef.getProperties().set("recordIcon",true);
     recordMix.getProperties().set("captureProgress",0.0f);
@@ -627,19 +642,21 @@ void RefMatchAudioProcessorEditor::timerCallback()
     play.setEnabled(!processor.isTransportPending() && !processor.getMediaController().isBusy());
     back.setEnabled(p.valid);forward.setEnabled(p.valid);
     if(processor.isAutoGainMatching()) {
-        const float remaining=5.0f*(1.0f-processor.getAutoGainProgress());
-        autoGain.setButtonText("MEASURING|" + juce::String(juce::jmax(0.0f,remaining),1) + " s");
+        autoGain.getProperties().set("autoGainMeasuring",true);
+        autoGain.getProperties().set("autoGainProgress",processor.getAutoGainProgress());
+        autoGain.setButtonText("MEASURING");
         autoGain.setEnabled(false);
         autoGain.setToggleState(true,juce::dontSendNotification);
     } else {
+        autoGain.getProperties().set("autoGainMeasuring",false);
+        autoGain.getProperties().set("autoGainProgress",0.0f);
         const auto ag=processor.getAutoGainStatus();
         if (ag.startsWith("LEVEL MATCHED")) {
             autoGain.setButtonText("AUTO GAIN|" + juce::String(processor.getLastAutoGainDb(),1) + " dB");
             autoGain.setToggleState(true,juce::dontSendNotification);
         } else {
             autoGain.setToggleState(false,juce::dontSendNotification);
-            if (ag.startsWith("RETRY")) autoGain.setButtonText("AUTO GAIN|RETRY");
-            else if (ag.startsWith("PLAY MIX")) autoGain.setButtonText("AUTO GAIN|PLAY MIX");
+            if (ag.startsWith("RETRY")) autoGain.setButtonText("RETRY");
             else autoGain.setButtonText("AUTO GAIN");
         }
         autoGain.setEnabled(true);
@@ -822,7 +839,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.55    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.56    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
