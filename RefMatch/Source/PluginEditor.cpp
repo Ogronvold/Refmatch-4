@@ -362,8 +362,19 @@ void RefMatchLookAndFeel::drawButtonText(juce::Graphics& g,juce::TextButton& but
 void RefMatchLookAndFeel::drawLinearSlider(juce::Graphics& g,int x,int y,int width,int height,float position,float,float,juce::Slider::SliderStyle,juce::Slider& slider)
 {
     const float mid=y+height*.5f;
-    g.setColour(line.darker(.08f));g.fillRoundedRectangle(float(x),mid-2,float(width),4,2);
     const auto accent=slider.findColour(juce::Slider::trackColourId);
+    if(bool(slider.getProperties()["compactSeek"])) {
+        g.setColour(line.withAlpha(.72f));
+        g.fillRoundedRectangle(float(x),mid-1.6f,float(width),3.2f,1.6f);
+        g.setColour(accent.withAlpha(.92f));
+        g.fillRoundedRectangle(float(x),mid-1.6f,std::max(0.f,position-x),3.2f,1.6f);
+        g.setColour(accent.withAlpha(.16f));
+        g.fillEllipse(position-7.f,mid-7.f,14.f,14.f);
+        g.setColour(text.withAlpha(.97f));
+        g.fillEllipse(position-4.5f,mid-4.5f,9.f,9.f);
+        return;
+    }
+    g.setColour(line.darker(.08f));g.fillRoundedRectangle(float(x),mid-2,float(width),4,2);
     g.setColour(juce::Colours::white.withAlpha(.025f));g.fillRoundedRectangle(float(x),mid-2,float(width),1.2f,1.f);
     g.setGradientFill(juce::ColourGradient(bool(slider.getProperties()["dualAccent"])?cyan:accent,float(x),mid,bool(slider.getProperties()["dualAccent"])?violet:accent,float(x+width),mid,false));
     g.fillRoundedRectangle(float(x),mid-2,std::max(0.f,position-x),4,2);
@@ -400,7 +411,7 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     setLookAndFeel(&look);setResizable(false,false);
     for(juce::Component* c:std::initializer_list<juce::Component*>{&a,&b,&switchButton,&eqTab,&loopTab,&play,&toneButton,&toneReset,&toneOn,&graphRange,&quickLoop,&matchState,&lowType,&highType,&midQ,
         &recordMix,&recordRef,&match,&reset,&autoGain,&eqOn,&gain,&amount,&smooth,&back,&forward,&timeline,&inTime,&outTime,&setIn,&setOut,&clearLoop,&zoomMinus,&zoomPlus,&loopZoom,
-        &status,&mixProfile,&refProfile,&position})addAndMakeVisible(c);
+        &status,&mixProfile,&refProfile,&position,&referenceSeek})addAndMakeVisible(c);
     a.onClick=[this]{processor.selectSource(false);};b.onClick=[this]{processor.selectSource(true);};
     switchButton.onClick=[this]{processor.switchWithSystemMedia();};
     quickLoop.onClick=[this]{
@@ -420,6 +431,15 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     };
     back.onClick=[this]{processor.getLoop().skip(-5);};forward.onClick=[this]{processor.getLoop().skip(5);};
     back.setButtonText("-5 s");forward.setButtonText("+5 s");
+    referenceSeek.setSliderStyle(juce::Slider::LinearHorizontal);
+    referenceSeek.setTextBoxStyle(juce::Slider::NoTextBox,false,0,0);
+    referenceSeek.setColour(juce::Slider::trackColourId,violet);
+    referenceSeek.getProperties().set("compactSeek",true);
+    referenceSeek.setRange(0.0,1.0,0.01);
+    referenceSeek.onValueChange=[this]{
+        const auto pos=processor.getLoop().getPosition();
+        if(pos.valid && pos.duration>0.0) processor.getLoop().seek(referenceSeek.getValue());
+    };
     // Keep the compact reference transport visually clean: no hover tooltip
     // can cover the waveform/player card, and the play/pause glyph is drawn
     // by the LookAndFeel rather than relying on a font glyph.
@@ -721,6 +741,14 @@ void RefMatchAudioProcessorEditor::timerCallback()
     const auto referenceTooltip=(currentMedia.title.isNotEmpty()?currentMedia.title:currentMedia.track)
         +(currentMedia.artist.isNotEmpty()?"\n"+currentMedia.artist:juce::String());
     b.setTooltip(referenceTooltip);
+    referenceSeek.setEnabled(p.valid && p.duration>0.0);
+    if(p.valid && p.duration>0.0) {
+        referenceSeek.setRange(0.0,std::max(0.01,p.duration),0.01);
+        referenceSeek.setValue(juce::jlimit(0.0,p.duration,p.seconds),juce::dontSendNotification);
+    } else {
+        referenceSeek.setRange(0.0,1.0,0.01);
+        referenceSeek.setValue(0.0,juce::dontSendNotification);
+    }
     const auto playback=processor.getMediaController().playbackState();
     play.setToggleState(playback==1,juce::dontSendNotification);
     play.setButtonText("");
@@ -937,7 +965,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.67    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.68    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -965,23 +993,16 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     drawSignalActivity(205.f,102.f,processor.getSourcePeakDb(),cyan);
 
     const auto media=processor.getLoop().getPosition();
-    // Compact reference player layout: source badge, brighter artwork + metadata,
-    // a tiny live activity indicator, then transport directly below the metadata.
-    const juce::Rectangle<float> cover(620,76,46,46);
-    // Artwork is intentionally latched per track. The now-playing API can refresh
-    // artwork data repeatedly while unrelated UI meters repaint; accepting every
-    // refresh can make the cover appear to pulse/blink. Only replace the cached
-    // image when the actual media track changes.
+    // Reference player: compact enough to stay aligned with A, but structured
+    // like a proper mini player (badge + artwork + metadata + transport + seek).
+    const juce::Rectangle<float> cover(610,74,52,52);
     const auto artworkTrack = media.track.isNotEmpty() ? media.track : (media.title + "|" + media.artist);
     if(cachedArtworkTrack != artworkTrack) {
         cachedArtwork = {};
         cachedArtworkTrack = artworkTrack;
     }
     if(media.artwork.isValid() && !cachedArtwork.isValid()) {
-        // Freeze the artwork into a fully opaque RGB snapshot. This deliberately
-        // removes source alpha/transparency so changing card backgrounds, meters,
-        // source selection or repaints can never show through the cover image.
-        juce::Image frozen(juce::Image::RGB, 96, 96, true);
+        juce::Image frozen(juce::Image::RGB, 104, 104, true);
         juce::Graphics fg(frozen);
         fg.fillAll(juce::Colour(0xff0f1722));
         fg.drawImageWithin(media.artwork, 0, 0, frozen.getWidth(), frozen.getHeight(),
@@ -990,24 +1011,29 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     }
     if(cachedArtwork.isValid()) {
         g.setOpacity(1.0f);
-        g.drawImageWithin(cachedArtwork,620,76,46,46,juce::RectanglePlacement::centred, false);
+        g.drawImageWithin(cachedArtwork,610,74,52,52,juce::RectanglePlacement::centred, false);
         g.setOpacity(1.0f);
     } else {
-        g.setColour(line);g.fillRoundedRectangle(cover,5.f);
-        g.setColour(violet.withAlpha(.8f));g.fillEllipse(635,91,16,16);
+        g.setColour(line);g.fillRoundedRectangle(cover,6.f);
+        g.setColour(violet.withAlpha(.8f));g.fillEllipse(628,92,16,16);
     }
 
     const auto fullTitle=media.title.isNotEmpty()?media.title:"REFERENCE";
-    const auto shownTitle=fullTitle.length()>18?fullTitle.substring(0,17)+"...":fullTitle;
-    const auto shownArtist=media.artist.length()>20?media.artist.substring(0,19)+"...":media.artist;
-    g.setColour(text);g.setFont(juce::Font(juce::FontOptions(11.5f,juce::Font::bold)));
-    g.drawText(shownTitle,678,76,116,18,juce::Justification::left);
-    g.setFont(juce::Font(juce::FontOptions(9.8f)));g.setColour(text.withAlpha(.78f));
-    g.drawText(shownArtist,678,95,116,16,juce::Justification::left);
+    const auto shownTitle=fullTitle.length()>17?fullTitle.substring(0,16)+"...":fullTitle;
+    const auto shownArtist=media.artist.length()>18?media.artist.substring(0,17)+"...":media.artist;
+    g.setColour(text);g.setFont(juce::Font(juce::FontOptions(12.2f,juce::Font::bold)));
+    g.drawText(shownTitle,676,75,105,20,juce::Justification::left);
+    g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(text.withAlpha(.72f));
+    g.drawText(shownArtist,676,97,105,17,juce::Justification::left);
+    drawSignalActivity(768.f,100.f,processor.getReferencePeakDb(),violet);
 
-    // Keep the activity indicator, but integrate it into the metadata block
-    // rather than leaving it floating above/beside the former waveform.
-    drawSignalActivity(796.f,97.f,processor.getReferencePeakDb(),violet);
+    // Time labels frame the seek bar without increasing the card height.
+    g.setFont(juce::Font(juce::FontOptions(8.8f)));
+    g.setColour(muted.withAlpha(.92f));
+    const auto currentTime=media.valid?timeText(media.seconds):juce::String("0:00");
+    const auto totalTime=(media.valid && media.duration>0.0)?timeText(media.duration):juce::String("--:--");
+    g.drawText(currentTime,552,140,42,16,juce::Justification::centredLeft);
+    g.drawText(totalTime,870,140,38,16,juce::Justification::centredRight);
 
     // Shared LOOP + ON/OFF control. The two child controls sit inside one
     // rounded container with a divider, matching the three-state mockup:
@@ -1128,14 +1154,15 @@ void RefMatchAudioProcessorEditor::updateMatchHandle(float x)
 void RefMatchAudioProcessorEditor::resized()
 {
     // Top source cards
-    a.setBounds(58,78,48,42); b.setBounds(554,78,48,42); switchButton.setBounds(437,70,66,66);
+    a.setBounds(58,78,48,42); b.setBounds(552,78,46,46); switchButton.setBounds(437,70,66,66);
     gain.setBounds(158,112,224,30);
     autoGain.setBounds(260,78,132,22);
-    // Reference transport now occupies the former waveform row, directly under
-    // title/artist, so the card reads as one compact player block.
-    back.setBounds(678,118,42,28);
-    play.setBounds(726,118,34,28);
-    forward.setBounds(766,118,42,28);
+    // B stays the same height as A, but uses a mini-player layout. Transport is
+    // grouped to the right, with a slim seek bar tucked into the bottom row.
+    back.setBounds(790,80,38,30);
+    play.setBounds(832,78,36,34);
+    forward.setBounds(872,80,38,30);
+    referenceSeek.setBounds(596,137,268,20);
 
     // Main action row: all labels fit at the native 960 px width.
     recordMix.setBounds(36,184,166,38); recordRef.setBounds(214,184,166,38); match.setBounds(392,184,156,38); reset.setBounds(560,184,page==2?92:104,38);

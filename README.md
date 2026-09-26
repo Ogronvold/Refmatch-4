@@ -1,11 +1,12 @@
-# RefMatch 0.5.67 — Hear Matched alignment + bypassed graph state
+# RefMatch 0.5.68 — Reference Player Layout
 
-Incremental UI update based on 0.5.66.
+This release redesigns only the B / reference card UI while preserving the existing playback and streaming logic.
 
-Changes:
-- Moved the HEAR MATCHED / HEAR ORIGINAL comparison button 2 px to the right so it is visually centred beneath MATCHED.
-- When Match is bypassed / HEAR ORIGINAL is active, the Match EQ target/applied correction is shown in a softer neutral grey state instead of the normal active colours.
-- The Matched (Applied) legend is also dimmed while bypassed.
-- Re-enabling HEAR MATCHED restores the normal coloured Match EQ display.
-- No Match EQ DSP, capture, Auto Gain, Loop, Tone, transport, or parameter behaviour was changed.
-- Plugin/CMake version: 0.5.67.
+- B card remains aligned to the same overall height as A.
+- Artwork is slightly larger and metadata is clearer.
+- `-5 s`, play/pause and `+5 s` are grouped on the right.
+- A slim purple seek/progress bar now sits along the bottom of the B card.
+- Current time and total duration are shown at the left/right ends of the seek row.
+- Long title/artist text remains truncated and the existing tooltip still exposes full metadata.
+- No Match EQ, Auto Gain, Loop, Tone, DSP or parameter behavior was changed.
+- Plugin/CMake version: 0.5.68.

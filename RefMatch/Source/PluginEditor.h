@@ -49,7 +49,7 @@ private:
     juce::ComboBox graphRange;
     juce::Label residualStatus;
     float graphScale=24.f;
-    juce::Slider gain,amount,smooth,midQ,loopZoom;
+    juce::Slider gain,amount,smooth,midQ,loopZoom,referenceSeek;
     std::array<juce::Slider,6> tone;
     std::array<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>,6> toneAttachments;
     juce::TextEditor inTime,outTime;

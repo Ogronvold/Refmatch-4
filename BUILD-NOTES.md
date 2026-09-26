@@ -1,7 +1,8 @@
-## 0.5.67
+## 0.5.68
 
-- Shifted HEAR MATCHED / HEAR ORIGINAL 2 px right for visual centring beneath MATCHED.
-- Added a visual bypass state for Match EQ: target/applied correction and Matched (Applied) legend become soft grey when HEAR ORIGINAL is active.
-- Active Match EQ colours return automatically when HEAR MATCHED is active.
-- DSP and parameter behaviour are unchanged.
-- Updated visible plugin version and CMake project version to 0.5.67.
+- Redesigned the B/reference card into a compact mini-player while keeping its height matched to A.
+- Added a purple seek/progress slider driven by the existing media position/duration.
+- Grouped transport controls on the right and increased artwork/metadata clarity.
+- Kept existing system-media transport and reference capture behavior unchanged.
+- Updated visible plugin version and CMake project version to 0.5.68.
+- RuntimeTests.cpp compiled and passed locally after the UI changes.
