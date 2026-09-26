@@ -272,9 +272,9 @@ void RefMatchLookAndFeel::drawButtonText(juce::Graphics& g,juce::TextButton& but
 
         // Use the actual Unicode clockwise open-circle arrow requested for Reset.
         // This avoids a hand-drawn approximation and keeps the icon visually clean.
-        g.setFont(juce::Font(juce::FontOptions(21.f)));
+        g.setFont(juce::Font(juce::FontOptions(23.f)));
         g.drawText(juce::String::fromUTF8("\xE2\x9F\xB3"),
-                   juce::Rectangle<float>(r.getX()+7.f,r.getY(),30.f,r.getHeight()),
+                   juce::Rectangle<float>(r.getX()+6.f,r.getY()+1.5f,32.f,r.getHeight()),
                    juce::Justification::centred);
 
         g.setFont(juce::Font(juce::FontOptions(11.f,juce::Font::bold)));
@@ -927,7 +927,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.65    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.66    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
