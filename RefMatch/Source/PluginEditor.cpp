@@ -837,6 +837,8 @@ void RefMatchAudioProcessorEditor::drawSpectrum(juce::Graphics& g,juce::Rectangl
         }
 
         if(processor.hasMatch()) {
+        const bool matchAudible = processor.apvts.getRawParameterValue("processingafter")->load() > .5f
+            && processor.apvts.getRawParameterValue("matchenabled")->load() > .5f;
         const auto curve=processor.getMatchCurveDb();
         const auto fullCurve=processor.getMatchCurveDbAtAmount(1.0f);
         const float scale=graphScale;
@@ -851,11 +853,14 @@ void RefMatchAudioProcessorEditor::drawSpectrum(juce::Graphics& g,juce::Rectangl
             targetFill.lineTo(plot.getRight(),plot.getCentreY());
             targetFill.lineTo(plot.getX(),plot.getCentreY());
             targetFill.closeSubPath();
-            g.setGradientFill(juce::ColourGradient(violet.withAlpha(.08f),plot.getTopLeft(),violet.withAlpha(.015f),plot.getBottomLeft(),false));
+            const auto targetColour = matchAudible ? violet : muted;
+            g.setGradientFill(juce::ColourGradient(targetColour.withAlpha(matchAudible ? .08f : .035f),plot.getTopLeft(),
+                                                   targetColour.withAlpha(matchAudible ? .015f : .008f),plot.getBottomLeft(),false));
             g.fillPath(targetFill);
         }
-        g.setColour(violet.withAlpha(.11f));g.strokePath(targetPath,juce::PathStrokeType(5.5f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
-        g.setColour(violet.withAlpha(.34f));g.strokePath(targetPath,juce::PathStrokeType(1.25f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+        const auto targetColour = matchAudible ? violet : muted;
+        g.setColour(targetColour.withAlpha(matchAudible ? .11f : .06f));g.strokePath(targetPath,juce::PathStrokeType(5.5f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+        g.setColour(targetColour.withAlpha(matchAudible ? .34f : .20f));g.strokePath(targetPath,juce::PathStrokeType(1.25f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
 
         // Draw the actually-applied response as a magnitude-sensitive colour line.
         // Near 0 dB it stays almost white; stronger corrections move through mint
@@ -870,8 +875,13 @@ void RefMatchAudioProcessorEditor::drawSpectrum(juce::Graphics& g,juce::Rectangl
                 const float y2=plot.getCentreY()-std::clamp(curve[i],-scale,scale)/(2*scale)*plot.getHeight();
                 const float magnitude=.5f*(std::abs(curve[i-1])+std::abs(curve[i]));
                 const float strength=std::clamp(magnitude/4.f,0.f,1.f);
-                juce::Colour colour=nearWhite.interpolatedWith(mint,std::min(1.f,strength*1.6f));
-                if(strength>.35f) colour=colour.interpolatedWith(blue,std::clamp((strength-.35f)/.65f,0.f,1.f));
+                juce::Colour colour;
+                if(matchAudible) {
+                    colour=nearWhite.interpolatedWith(mint,std::min(1.f,strength*1.6f));
+                    if(strength>.35f) colour=colour.interpolatedWith(blue,std::clamp((strength-.35f)/.65f,0.f,1.f));
+                } else {
+                    colour=muted.withAlpha(.44f);
+                }
                 if(!eqOn.getToggleState()) colour=colour.withMultipliedAlpha(.55f);
                 // soft bloom underneath each segment, then the crisp coloured line
                 g.setColour(colour.withAlpha(.10f));
@@ -927,7 +937,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.66    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.67    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -1025,7 +1035,11 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
         // legend
         auto dot=[&](float x,juce::Colour c,const juce::String& t,float alpha=1.0f){g.setColour(c.withAlpha(alpha));g.fillEllipse(x,269,7,7);g.setColour(text.withAlpha(.76f*alpha));g.setFont(juce::Font(juce::FontOptions(9.f)));g.drawText(t,int(x+14),263,104,18,juce::Justification::left);};
         dot(330,cyan,"Your Mix");dot(420,violet,"Reference");
-        dot(514,juce::Colour(0xffffb5ff),"Matched (Applied)",processor.hasMatch()?1.0f:.28f);
+        const bool matchAudible = processor.hasMatch()
+            && processor.apvts.getRawParameterValue("processingafter")->load() > .5f
+            && processor.apvts.getRawParameterValue("matchenabled")->load() > .5f;
+        dot(514, matchAudible ? juce::Colour(0xffffb5ff) : muted,
+            "Matched (Applied)", processor.hasMatch() ? (matchAudible ? 1.0f : .42f) : .28f);
         drawSpectrum(g,{58,282,844,150},true);
         const float low=processor.apvts.getRawParameterValue("matchlow")->load();
         const float high=processor.apvts.getRawParameterValue("matchhigh")->load();
@@ -1130,7 +1144,7 @@ void RefMatchAudioProcessorEditor::resized()
     loopTab.setBounds(page==2?664:676,184,page==2?112:84,38);
     quickLoop.setBounds(page==2?780:764,184,page==2?68:84,38);
     eqOn.setBounds(0,0,0,0);
-    mixProfile.setBounds(54,219,146,18); refProfile.setBounds(232,219,146,18); matchState.setBounds(410,224,116,20); residualStatus.setBounds(0,0,0,0);
+    mixProfile.setBounds(54,219,146,18); refProfile.setBounds(232,219,146,18); matchState.setBounds(412,224,116,20); residualStatus.setBounds(0,0,0,0);
     eqTab.setBounds(44,184,120,36);
 
     // Graph controls

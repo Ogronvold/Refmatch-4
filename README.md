@@ -1,10 +1,11 @@
-# RefMatch 0.5.66 — Reset icon alignment polish
+# RefMatch 0.5.67 — Hear Matched alignment + bypassed graph state
 
-This is an incremental UI-only update based on 0.5.65.
+Incremental UI update based on 0.5.66.
 
-- Reset icon is slightly larger and sits a touch lower for better visual centering.
-- The reset symbol itself is unchanged.
-- No functional, DSP, workflow or parameter changes.
-- Plugin/CMake version: 0.5.66.
-
-The complete source project is inside the `RefMatch/` folder.
+Changes:
+- Moved the HEAR MATCHED / HEAR ORIGINAL comparison button 2 px to the right so it is visually centred beneath MATCHED.
+- When Match is bypassed / HEAR ORIGINAL is active, the Match EQ target/applied correction is shown in a softer neutral grey state instead of the normal active colours.
+- The Matched (Applied) legend is also dimmed while bypassed.
+- Re-enabling HEAR MATCHED restores the normal coloured Match EQ display.
+- No Match EQ DSP, capture, Auto Gain, Loop, Tone, transport, or parameter behaviour was changed.
+- Plugin/CMake version: 0.5.67.
