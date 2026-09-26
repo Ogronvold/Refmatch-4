@@ -1,3 +1,8 @@
+## 0.5.57
+- Auto Gain completed/active state now shows only `AUTO GAIN` in the pill.
+- Removed the inline dB value/divider from the Auto Gain pill; gain compensation remains visible in the main Gain readout.
+- Measuring progress and RETRY states are unchanged.
+
 # RefMatch 0.5.49
 
 - Action-row spacing normalized to 12 px between Record Mix, Record Ref, Match, Reset, Loop, quick toggle, and EQ controls.
