@@ -1,6 +1,7 @@
-## 0.5.72
+## 0.5.73
 
-- Shifted the reference transport group (`-5`, Play/Pause, `+5`) down by 3 px.
-- No transport sizing or functionality changes.
-- No DSP, matching, loop, Auto Gain, Tone or parameter changes.
-- Updated visible plugin version and CMake project version to 0.5.72.
+- Fixed the B/reference mini-player progress bar visually resetting to 0:00 when playback is paused/stopped.
+- Added a UI-side last-known-position cache for transient zero/invalid MediaRemote position reports while paused.
+- Explicit seeks continue to update the cached display position immediately.
+- No DSP, Match EQ, Auto Gain, loop, Tone EQ, or audio playback behavior was changed.
+- Updated visible plugin version and CMake project version to 0.5.73.

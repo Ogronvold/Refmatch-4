@@ -1,6 +1,3 @@
-# RefMatch 0.5.59
+# RefMatch source — 0.5.73
 
-See ../README.md, ../BUILD-NOTES.md and ../INSTALL-DA.txt.
-
-ReferenceAnalysis owns the system-audio analysis thread. MIX processing remains in
-PluginProcessor. MatchEQ contains the learned match bank followed by the three Tone stages.
+JUCE source for RefMatch 0.5.73. This build adds a paused-position display hold to the B/reference mini-player so transient MediaRemote zero/invalid position reports do not make the seek bar appear to restart from the beginning.

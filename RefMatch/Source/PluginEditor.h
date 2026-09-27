@@ -69,5 +69,6 @@ private:
     float lastResidualDb=-1.0f;
     juce::Image cachedArtwork;
     juce::String cachedArtworkTrack;
+    SystemMediaController::MediaPosition referenceDisplayMedia;
     enum class MatchDrag { none, low, high } matchDrag=MatchDrag::none;
 };

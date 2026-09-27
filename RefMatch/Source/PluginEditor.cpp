@@ -473,7 +473,13 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     referenceSeek.setRange(0.0,1.0,0.01);
     referenceSeek.onValueChange=[this]{
         const auto pos=processor.getLoop().getPosition();
-        if(pos.valid && pos.duration>0.0) processor.getLoop().seek(referenceSeek.getValue());
+        if(pos.valid && pos.duration>0.0 && processor.getLoop().seek(referenceSeek.getValue())) {
+            // Keep the mini-player display aligned with an explicit user seek,
+            // including while playback is paused.
+            referenceDisplayMedia = pos;
+            referenceDisplayMedia.seconds = referenceSeek.getValue();
+            referenceDisplayMedia.valid = true;
+        }
     };
     // Keep the compact reference transport visually clean: no hover tooltip
     // can cover the waveform/player card, and the play/pause glyph is drawn
@@ -775,19 +781,48 @@ void RefMatchAudioProcessorEditor::timerCallback()
     for(auto& control:tone) control.setAlpha(toneAlpha);
     lowType.setAlpha(toneAlpha);highType.setAlpha(toneAlpha);midQ.setAlpha(toneAlpha);toneReset.setAlpha(toneEnabled?1.0f:.60f);
     const auto p=processor.getLoop().getPosition();position.setText(p.valid?timeText(p.seconds)+"  /  "+timeText(p.duration):"Position unavailable",juce::dontSendNotification);
-    const auto currentMedia=processor.getLoop().getPosition();
+    const auto playback=processor.getMediaController().playbackState();
+
+    // MediaRemote can briefly report an invalid/zero elapsed time when the
+    // reference is paused. The audio itself resumes at the correct position,
+    // so keep the mini-player frozen at its last trustworthy position instead
+    // of visually jumping back to 0:00. A genuine track change still resets
+    // immediately, and an explicit seek updates this cache in onValueChange.
+    if(p.valid && p.duration>0.0) {
+        const bool sameTrack = referenceDisplayMedia.valid && p.track.isNotEmpty()
+                            && p.track == referenceDisplayMedia.track;
+        const bool looksLikePausedReset = playback != 1 && sameTrack
+                            && referenceDisplayMedia.seconds > 0.25 && p.seconds < 0.05;
+        if(!looksLikePausedReset) {
+            referenceDisplayMedia = p;
+        } else {
+            referenceDisplayMedia.playing = false;
+            referenceDisplayMedia.playbackKnown = p.playbackKnown;
+            if(p.title.isNotEmpty()) referenceDisplayMedia.title = p.title;
+            if(p.artist.isNotEmpty()) referenceDisplayMedia.artist = p.artist;
+            if(p.artwork.isValid()) referenceDisplayMedia.artwork = p.artwork;
+        }
+    } else if(playback == 1 || !referenceDisplayMedia.valid) {
+        referenceDisplayMedia = p;
+    } else {
+        // Paused + temporarily unavailable position: keep the last valid UI
+        // position rather than clearing the seek bar.
+        referenceDisplayMedia.playing = false;
+        referenceDisplayMedia.playbackKnown = p.playbackKnown;
+    }
+
+    const auto& currentMedia=referenceDisplayMedia;
     const auto referenceTooltip=(currentMedia.title.isNotEmpty()?currentMedia.title:currentMedia.track)
         +(currentMedia.artist.isNotEmpty()?"\n"+currentMedia.artist:juce::String());
     b.setTooltip(referenceTooltip);
-    referenceSeek.setEnabled(p.valid && p.duration>0.0);
-    if(p.valid && p.duration>0.0) {
-        referenceSeek.setRange(0.0,std::max(0.01,p.duration),0.01);
-        referenceSeek.setValue(juce::jlimit(0.0,p.duration,p.seconds),juce::dontSendNotification);
+    referenceSeek.setEnabled(currentMedia.valid && currentMedia.duration>0.0);
+    if(currentMedia.valid && currentMedia.duration>0.0) {
+        referenceSeek.setRange(0.0,std::max(0.01,currentMedia.duration),0.01);
+        referenceSeek.setValue(juce::jlimit(0.0,currentMedia.duration,currentMedia.seconds),juce::dontSendNotification);
     } else {
         referenceSeek.setRange(0.0,1.0,0.01);
         referenceSeek.setValue(0.0,juce::dontSendNotification);
     }
-    const auto playback=processor.getMediaController().playbackState();
     play.setToggleState(playback==1,juce::dontSendNotification);
     play.setButtonText("");
     play.setEnabled(!processor.isTransportPending() && !processor.getMediaController().isBusy());
@@ -1003,7 +1038,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.72    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.73    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -1030,7 +1065,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     };
     drawSignalActivity(205.f,102.f,processor.getSourcePeakDb(),cyan);
 
-    const auto media=processor.getLoop().getPosition();
+    const auto media=referenceDisplayMedia;
     // Reference player: compact enough to stay aligned with A, but structured
     // like a proper mini player (badge + artwork + metadata + transport + seek).
     const juce::Rectangle<float> cover(610,72,60,60);

@@ -1,10 +1,11 @@
-# RefMatch 0.5.72 — Reference Transport Alignment
+# RefMatch 0.5.73 — Reference Position Hold
 
-Small visual alignment update to the B/reference mini-player.
+This version keeps the B/reference player timeline visually parked at the last known playback position when the reference is paused/stopped, instead of briefly jumping back to 0:00.
 
-- Moved the complete `-5 / Play-Pause / +5` transport group 3 px downward.
-- This aligns the transport group more closely with the vertical centre of the B button.
-- Transport styling, sizes, spacing and playback behaviour are otherwise unchanged.
-- Artwork, metadata, seek bar, DSP and all other UI remain unchanged.
+- Seek/progress bar keeps the last trustworthy position while paused.
+- Current-time display stays at that same position.
+- Playback itself is unchanged; starting again continues to follow the live player position.
+- Genuine track changes still reset normally.
+- Explicit user seeks still update the displayed position immediately.
 
-Plugin/CMake version: 0.5.72.
+Plugin/CMake version: 0.5.73.
