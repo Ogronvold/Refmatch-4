@@ -1,5 +1,5 @@
-# RefMatch 0.5.71 — Release setup
+# RefMatch 0.5.72 — Release setup
 
-Build the RefMatch project with the existing GitHub Actions workflow or the existing JUCE/CMake macOS build process. The expected visible plugin version is `v0.5.71`.
+Build the RefMatch project with the existing GitHub Actions workflow or the existing JUCE/CMake macOS build process. The expected visible plugin version is `v0.5.72`.
 
-This release is a UI-only refinement of the B/reference player layout. No DSP or streaming behavior was intentionally changed.
+This release only changes vertical alignment of the reference transport controls.

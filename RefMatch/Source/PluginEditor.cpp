@@ -1003,7 +1003,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.71    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.72    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -1197,9 +1197,9 @@ void RefMatchAudioProcessorEditor::resized()
     autoGain.setBounds(260,78,132,22);
     // B stays the same height as A, but uses a mini-player layout. Transport is
     // grouped to the right, with a slim seek bar tucked into the bottom row.
-    back.setBounds(790,83,34,28);
-    play.setBounds(832,78,38,38);
-    forward.setBounds(878,83,34,28);
+    back.setBounds(790,86,34,28);
+    play.setBounds(832,81,38,38);
+    forward.setBounds(878,86,34,28);
     referenceSeek.setBounds(594,136,266,21);
 
     // Main action row: all labels fit at the native 960 px width.

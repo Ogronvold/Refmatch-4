@@ -1,11 +1,10 @@
-# RefMatch 0.5.71 — Reference Transport Minimal
+# RefMatch 0.5.72 — Reference Transport Alignment
 
-This incremental build keeps the 0.5.70 reference-player layout and only refines the transport controls inside the B card.
+Small visual alignment update to the B/reference mini-player.
 
-Changes:
-- lighter `-5` / `+5` skip controls with no permanent heavy box
-- circular Play/Pause control as the visual focus
-- tighter, calmer transport spacing
-- no playback or DSP logic changes
+- Moved the complete `-5 / Play-Pause / +5` transport group 3 px downward.
+- This aligns the transport group more closely with the vertical centre of the B button.
+- Transport styling, sizes, spacing and playback behaviour are otherwise unchanged.
+- Artwork, metadata, seek bar, DSP and all other UI remain unchanged.
 
-Plugin/CMake version: 0.5.71.
+Plugin/CMake version: 0.5.72.

@@ -1,8 +1,6 @@
-## 0.5.71
+## 0.5.72
 
-- Polished the B/reference transport controls only.
-- `-5` and `+5` are now lighter flat text controls instead of permanent boxed buttons.
-- Play/Pause is now the single circular primary transport control.
-- Improved spacing so the three transport actions read as one compact group.
-- Reference card artwork, metadata, progress bar, B badge, playback logic, DSP and all other UI remain unchanged.
-- Updated visible plugin version and CMake project version to 0.5.71.
+- Shifted the reference transport group (`-5`, Play/Pause, `+5`) down by 3 px.
+- No transport sizing or functionality changes.
+- No DSP, matching, loop, Auto Gain, Tone or parameter changes.
+- Updated visible plugin version and CMake project version to 0.5.72.
