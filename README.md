@@ -1,13 +1,11 @@
-# RefMatch 0.5.70 — Reference Player Proportions
+# RefMatch 0.5.71 — Reference Transport Minimal
 
-This version refines the B/reference card to follow the larger mini-player layout more closely while preserving the same overall card height as A.
+This incremental build keeps the 0.5.70 reference-player layout and only refines the transport controls inside the B card.
 
 Changes:
-- Larger B badge.
-- Larger artwork.
-- Larger, more prominent title and artist.
-- Larger -5 s / Play-Pause / +5 s transport controls.
-- Seek bar remains along the bottom with current time on the left and total duration on the right.
-- B card remains aligned to the same overall height as A.
-- No DSP, Match EQ, Auto Gain, Loop, Tone, or streaming logic changes.
-- Plugin/CMake version: 0.5.70.
+- lighter `-5` / `+5` skip controls with no permanent heavy box
+- circular Play/Pause control as the visual focus
+- tighter, calmer transport spacing
+- no playback or DSP logic changes
+
+Plugin/CMake version: 0.5.71.

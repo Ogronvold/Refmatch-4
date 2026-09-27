@@ -95,15 +95,28 @@ void RefMatchLookAndFeel::drawButtonBackground(juce::Graphics& g,juce::Button& b
 
     if(referenceTransport) {
         const bool primary=bool(button.getProperties()["referenceTransportPrimary"]);
-        const float radius=primary?11.f:9.f;
-        if(primary && (over || on)) glowRounded(g,r,radius,violet,on?.12f:.07f);
-        const auto base=panelRaised.withMultipliedBrightness(down?.90f:over?1.055f:1.f);
-        g.setGradientFill(juce::ColourGradient(base.brighter(.018f),r.getTopLeft(),base.darker(.09f),r.getBottomRight(),false));
-        g.fillRoundedRectangle(r,radius);
-        g.setColour((primary?(on?violet:line.brighter(.10f)):line).withAlpha(primary?(on?.90f:.72f):.62f));
-        g.drawRoundedRectangle(r,radius,primary?1.1f:.9f);
-        g.setColour(juce::Colours::white.withAlpha(over?.045f:.018f));
-        g.drawRoundedRectangle(r.reduced(1.f),juce::jmax(1.f,radius-1.f),.7f);
+        if(primary) {
+            // Play/Pause is the visual anchor of the transport: a clean circular control.
+            auto circle=r.withSizeKeepingCentre(std::min(r.getWidth(),r.getHeight()),std::min(r.getWidth(),r.getHeight()));
+            if(over || on) glowRounded(g,circle,circle.getWidth()*.5f,violet,on?.12f:.075f);
+            const auto base=panelRaised.withMultipliedBrightness(down?.90f:over?1.055f:1.f);
+            g.setGradientFill(juce::ColourGradient(base.brighter(.02f),circle.getTopLeft(),base.darker(.10f),circle.getBottomRight(),false));
+            g.fillEllipse(circle);
+            g.setColour((on?violet:line.brighter(.10f)).withAlpha(on?.90f:.72f));
+            g.drawEllipse(circle,1.05f);
+            g.setColour(juce::Colours::white.withAlpha(over?.045f:.018f));
+            g.drawEllipse(circle.reduced(1.f),.7f);
+        } else {
+            // Skip controls stay intentionally light: no permanent heavy box,
+            // only a subtle hover/press surface around the text.
+            if(over || down) {
+                const auto hoverFill=panelRaised.withMultipliedBrightness(down?.92f:1.045f);
+                g.setColour(hoverFill.withAlpha(over?.72f:.58f));
+                g.fillRoundedRectangle(r,8.f);
+                g.setColour(line.withAlpha(.42f));
+                g.drawRoundedRectangle(r,8.f,.8f);
+            }
+        }
         return;
     }
 
@@ -298,6 +311,13 @@ void RefMatchLookAndFeel::drawButtonText(juce::Graphics& g,juce::TextButton& but
                    juce::Justification::centredLeft);
         return;
     }
+    if(bool(button.getProperties()["referenceTransport"]) && !bool(button.getProperties()["referenceTransportPrimary"])) {
+        const auto r=button.getLocalBounds().toFloat();
+        g.setColour(text.withAlpha(down?.66f:over?1.f:.82f));
+        g.setFont(juce::Font(juce::FontOptions(10.8f,juce::Font::bold)));
+        g.drawText(button.getButtonText(),r,juce::Justification::centred);
+        return;
+    }
     if(bool(button.getProperties()["playerIcon"])) {
         const auto r=button.getLocalBounds().toFloat();
         const auto c=text.withAlpha(down?.70f:over?1.f:.94f);
@@ -445,7 +465,7 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
         timerCallback();
     };
     back.onClick=[this]{processor.getLoop().skip(-5);};forward.onClick=[this]{processor.getLoop().skip(5);};
-    back.setButtonText("-5 s");forward.setButtonText("+5 s");
+    back.setButtonText("-5");forward.setButtonText("+5");
     referenceSeek.setSliderStyle(juce::Slider::LinearHorizontal);
     referenceSeek.setTextBoxStyle(juce::Slider::NoTextBox,false,0,0);
     referenceSeek.setColour(juce::Slider::trackColourId,violet);
@@ -983,7 +1003,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.70    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.71    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -1177,9 +1197,9 @@ void RefMatchAudioProcessorEditor::resized()
     autoGain.setBounds(260,78,132,22);
     // B stays the same height as A, but uses a mini-player layout. Transport is
     // grouped to the right, with a slim seek bar tucked into the bottom row.
-    back.setBounds(786,82,40,30);
-    play.setBounds(832,79,36,36);
-    forward.setBounds(874,82,40,30);
+    back.setBounds(790,83,34,28);
+    play.setBounds(832,78,38,38);
+    forward.setBounds(878,83,34,28);
     referenceSeek.setBounds(594,136,266,21);
 
     // Main action row: all labels fit at the native 960 px width.

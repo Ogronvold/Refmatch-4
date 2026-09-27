@@ -1,8 +1,8 @@
-## 0.5.70
+## 0.5.71
 
-- Refined the B/reference mini-player layout to more closely match the supplied visual mockup.
-- Increased B badge, artwork, metadata typography, and transport control sizing.
-- Kept the seek bar and time labels in the bottom row.
-- Preserved the B card's total height so it remains balanced with A.
-- No DSP or playback behavior changes.
-- Updated visible plugin version and CMake project version to 0.5.70.
+- Polished the B/reference transport controls only.
+- `-5` and `+5` are now lighter flat text controls instead of permanent boxed buttons.
+- Play/Pause is now the single circular primary transport control.
+- Improved spacing so the three transport actions read as one compact group.
+- Reference card artwork, metadata, progress bar, B badge, playback logic, DSP and all other UI remain unchanged.
+- Updated visible plugin version and CMake project version to 0.5.71.
