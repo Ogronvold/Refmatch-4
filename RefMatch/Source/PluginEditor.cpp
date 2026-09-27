@@ -965,7 +965,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.68    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.69    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -995,14 +995,14 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     const auto media=processor.getLoop().getPosition();
     // Reference player: compact enough to stay aligned with A, but structured
     // like a proper mini player (badge + artwork + metadata + transport + seek).
-    const juce::Rectangle<float> cover(610,74,52,52);
+    const juce::Rectangle<float> cover(610,72,60,60);
     const auto artworkTrack = media.track.isNotEmpty() ? media.track : (media.title + "|" + media.artist);
     if(cachedArtworkTrack != artworkTrack) {
         cachedArtwork = {};
         cachedArtworkTrack = artworkTrack;
     }
     if(media.artwork.isValid() && !cachedArtwork.isValid()) {
-        juce::Image frozen(juce::Image::RGB, 104, 104, true);
+        juce::Image frozen(juce::Image::RGB, 120, 120, true);
         juce::Graphics fg(frozen);
         fg.fillAll(juce::Colour(0xff0f1722));
         fg.drawImageWithin(media.artwork, 0, 0, frozen.getWidth(), frozen.getHeight(),
@@ -1011,29 +1011,29 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     }
     if(cachedArtwork.isValid()) {
         g.setOpacity(1.0f);
-        g.drawImageWithin(cachedArtwork,610,74,52,52,juce::RectanglePlacement::centred, false);
+        g.drawImageWithin(cachedArtwork,610,72,60,60,juce::RectanglePlacement::centred, false);
         g.setOpacity(1.0f);
     } else {
-        g.setColour(line);g.fillRoundedRectangle(cover,6.f);
-        g.setColour(violet.withAlpha(.8f));g.fillEllipse(628,92,16,16);
+        g.setColour(line);g.fillRoundedRectangle(cover,7.f);
+        g.setColour(violet.withAlpha(.8f));g.fillEllipse(631,93,18,18);
     }
 
     const auto fullTitle=media.title.isNotEmpty()?media.title:"REFERENCE";
-    const auto shownTitle=fullTitle.length()>17?fullTitle.substring(0,16)+"...":fullTitle;
-    const auto shownArtist=media.artist.length()>18?media.artist.substring(0,17)+"...":media.artist;
-    g.setColour(text);g.setFont(juce::Font(juce::FontOptions(12.2f,juce::Font::bold)));
-    g.drawText(shownTitle,676,75,105,20,juce::Justification::left);
-    g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(text.withAlpha(.72f));
-    g.drawText(shownArtist,676,97,105,17,juce::Justification::left);
-    drawSignalActivity(768.f,100.f,processor.getReferencePeakDb(),violet);
+    const auto shownTitle=fullTitle.length()>15?fullTitle.substring(0,14)+"...":fullTitle;
+    const auto shownArtist=media.artist.length()>16?media.artist.substring(0,15)+"...":media.artist;
+    g.setColour(text);g.setFont(juce::Font(juce::FontOptions(14.0f,juce::Font::bold)));
+    g.drawText(shownTitle,682,75,94,22,juce::Justification::left);
+    g.setFont(juce::Font(juce::FontOptions(10.8f)));g.setColour(text.withAlpha(.72f));
+    g.drawText(shownArtist,682,100,94,18,juce::Justification::left);
+    drawSignalActivity(764.f,102.f,processor.getReferencePeakDb(),violet);
 
     // Time labels frame the seek bar without increasing the card height.
-    g.setFont(juce::Font(juce::FontOptions(8.8f)));
+    g.setFont(juce::Font(juce::FontOptions(9.4f)));
     g.setColour(muted.withAlpha(.92f));
     const auto currentTime=media.valid?timeText(media.seconds):juce::String("0:00");
     const auto totalTime=(media.valid && media.duration>0.0)?timeText(media.duration):juce::String("--:--");
-    g.drawText(currentTime,552,140,42,16,juce::Justification::centredLeft);
-    g.drawText(totalTime,870,140,38,16,juce::Justification::centredRight);
+    g.drawText(currentTime,550,140,42,16,juce::Justification::centredLeft);
+    g.drawText(totalTime,866,140,42,16,juce::Justification::centredRight);
 
     // Shared LOOP + ON/OFF control. The two child controls sit inside one
     // rounded container with a divider, matching the three-state mockup:
@@ -1084,7 +1084,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
         g.setGradientFill(juce::ColourGradient(panelRaised.withAlpha(.93f*toneVisual),toneCard.getTopLeft(),panel.darker(.20f).withAlpha(toneVisual),toneCard.getBottomRight(),false));g.fillRoundedRectangle(toneCard,11.f);
         g.setColour(line.withAlpha(.78f*toneVisual));g.drawRoundedRectangle(toneCard,11.f,1.f);g.drawHorizontalLine(543,58,902);
         const char* names[3]={"LOW","MID","HIGH"}; const char* ranges[3]={"30 - 300 Hz","200 Hz - 6 kHz","3 - 20 kHz"};
-        for(int i=0;i<3;++i){const float x=60.f+i*286.f;const auto accent=i==0?cyan:(i==1?cyan.interpolatedWith(violet,.52f):violet);g.setColour(accent.withAlpha(toneVisual));g.fillEllipse(x,554,10,10);g.setFont(juce::Font(juce::FontOptions(10.5f,juce::Font::bold)));g.drawText(names[i],int(x+18),548,52,22,juce::Justification::left);g.setFont(juce::Font(juce::FontOptions(8.8f)));g.setColour(muted.withAlpha(toneVisual));g.drawText(ranges[i],int(x+70),550,98,18,juce::Justification::left);g.drawText("Gain",int(x),576,34,18,juce::Justification::left);g.drawText("Freq",int(x),600,34,18,juce::Justification::left);if(i<2){g.setColour(line.withAlpha(.45f*toneVisual));g.drawVerticalLine(int(x+272),552,614);}}
+        for(int i=0;i<3;++i){const float x=60.f+i*286.f;const auto accent=i==0?cyan:(i==1?cyan.interpolatedWith(violet,.52f):violet);g.setColour(accent.withAlpha(toneVisual));g.fillEllipse(x,554,10,10);g.setFont(juce::Font(juce::FontOptions(10.5f,juce::Font::bold)));g.drawText(names[i],int(x+18),548,52,22,juce::Justification::left);g.setFont(juce::Font(juce::FontOptions(9.4f)));g.setColour(muted.withAlpha(toneVisual));g.drawText(ranges[i],int(x+70),550,98,18,juce::Justification::left);g.drawText("Gain",int(x),576,34,18,juce::Justification::left);g.drawText("Freq",int(x),600,34,18,juce::Justification::left);if(i<2){g.setColour(line.withAlpha(.45f*toneVisual));g.drawVerticalLine(int(x+272),552,614);}}
     } else {
         // LOOP opens beneath the unchanged main toolbar. The highlighted LOOP
         // button above is the view indicator, so the editor only needs a clean
@@ -1154,15 +1154,15 @@ void RefMatchAudioProcessorEditor::updateMatchHandle(float x)
 void RefMatchAudioProcessorEditor::resized()
 {
     // Top source cards
-    a.setBounds(58,78,48,42); b.setBounds(552,78,46,46); switchButton.setBounds(437,70,66,66);
+    a.setBounds(58,78,48,42); b.setBounds(548,76,54,54); switchButton.setBounds(437,70,66,66);
     gain.setBounds(158,112,224,30);
     autoGain.setBounds(260,78,132,22);
     // B stays the same height as A, but uses a mini-player layout. Transport is
     // grouped to the right, with a slim seek bar tucked into the bottom row.
-    back.setBounds(790,80,38,30);
-    play.setBounds(832,78,36,34);
-    forward.setBounds(872,80,38,30);
-    referenceSeek.setBounds(596,137,268,20);
+    back.setBounds(780,79,42,34);
+    play.setBounds(826,75,42,42);
+    forward.setBounds(872,79,42,34);
+    referenceSeek.setBounds(594,136,266,21);
 
     // Main action row: all labels fit at the native 960 px width.
     recordMix.setBounds(36,184,166,38); recordRef.setBounds(214,184,166,38); match.setBounds(392,184,156,38); reset.setBounds(560,184,page==2?92:104,38);

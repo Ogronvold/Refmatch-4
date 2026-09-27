@@ -1,12 +1,13 @@
-# RefMatch 0.5.68 — Reference Player Layout
+# RefMatch 0.5.69 — Reference Player Proportions
 
-This release redesigns only the B / reference card UI while preserving the existing playback and streaming logic.
+This version refines the B/reference card to follow the larger mini-player layout more closely while preserving the same overall card height as A.
 
+Changes:
+- Larger B badge.
+- Larger artwork.
+- Larger, more prominent title and artist.
+- Larger -5 s / Play-Pause / +5 s transport controls.
+- Seek bar remains along the bottom with current time on the left and total duration on the right.
 - B card remains aligned to the same overall height as A.
-- Artwork is slightly larger and metadata is clearer.
-- `-5 s`, play/pause and `+5 s` are grouped on the right.
-- A slim purple seek/progress bar now sits along the bottom of the B card.
-- Current time and total duration are shown at the left/right ends of the seek row.
-- Long title/artist text remains truncated and the existing tooltip still exposes full metadata.
-- No Match EQ, Auto Gain, Loop, Tone, DSP or parameter behavior was changed.
-- Plugin/CMake version: 0.5.68.
+- No DSP, Match EQ, Auto Gain, Loop, Tone, or streaming logic changes.
+- Plugin/CMake version: 0.5.69.
