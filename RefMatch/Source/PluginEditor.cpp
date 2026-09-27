@@ -91,6 +91,21 @@ void RefMatchLookAndFeel::drawButtonBackground(juce::Graphics& g,juce::Button& b
     const bool dual=bool(button.getProperties()["dualAccent"]);
     const bool glow=bool(button.getProperties()["glow"]);
     const bool roundSwitch=bool(button.getProperties()["roundSwitch"]);
+    const bool referenceTransport=bool(button.getProperties()["referenceTransport"]);
+
+    if(referenceTransport) {
+        const bool primary=bool(button.getProperties()["referenceTransportPrimary"]);
+        const float radius=primary?11.f:9.f;
+        if(primary && (over || on)) glowRounded(g,r,radius,violet,on?.12f:.07f);
+        const auto base=panelRaised.withMultipliedBrightness(down?.90f:over?1.055f:1.f);
+        g.setGradientFill(juce::ColourGradient(base.brighter(.018f),r.getTopLeft(),base.darker(.09f),r.getBottomRight(),false));
+        g.fillRoundedRectangle(r,radius);
+        g.setColour((primary?(on?violet:line.brighter(.10f)):line).withAlpha(primary?(on?.90f:.72f):.62f));
+        g.drawRoundedRectangle(r,radius,primary?1.1f:.9f);
+        g.setColour(juce::Colours::white.withAlpha(over?.045f:.018f));
+        g.drawRoundedRectangle(r.reduced(1.f),juce::jmax(1.f,radius-1.f),.7f);
+        return;
+    }
 
     if(roundSwitch) {
         auto circle=r.withSizeKeepingCentre(std::min(r.getWidth(),r.getHeight()),std::min(r.getWidth(),r.getHeight()));
@@ -445,6 +460,9 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     // by the LookAndFeel rather than relying on a font glyph.
     back.setTooltip({});forward.setTooltip({});play.setTooltip({});
     play.getProperties().set("playerIcon",true);
+    for(auto* transportButton:{&back,&play,&forward})
+        transportButton->getProperties().set("referenceTransport",true);
+    play.getProperties().set("referenceTransportPrimary",true);
     timeline.onRange=[this](double start,double end){
         inTime.setText(rangeText(start));outTime.setText(rangeText(end));
         if(processor.getLoop().setRange(start,end))processor.getLoop().enable(true);
@@ -965,7 +983,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.69    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.70    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -1154,14 +1172,14 @@ void RefMatchAudioProcessorEditor::updateMatchHandle(float x)
 void RefMatchAudioProcessorEditor::resized()
 {
     // Top source cards
-    a.setBounds(58,78,48,42); b.setBounds(548,76,54,54); switchButton.setBounds(437,70,66,66);
+    a.setBounds(58,78,48,42); b.setBounds(554,78,48,42); switchButton.setBounds(437,70,66,66);
     gain.setBounds(158,112,224,30);
     autoGain.setBounds(260,78,132,22);
     // B stays the same height as A, but uses a mini-player layout. Transport is
     // grouped to the right, with a slim seek bar tucked into the bottom row.
-    back.setBounds(780,79,42,34);
-    play.setBounds(826,75,42,42);
-    forward.setBounds(872,79,42,34);
+    back.setBounds(786,82,40,30);
+    play.setBounds(832,79,36,36);
+    forward.setBounds(874,82,40,30);
     referenceSeek.setBounds(594,136,266,21);
 
     // Main action row: all labels fit at the native 960 px width.
