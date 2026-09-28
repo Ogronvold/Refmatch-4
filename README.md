@@ -1,11 +1,9 @@
-# RefMatch 0.5.73 — Reference Position Hold
+# RefMatch 0.5.74 — Reference Capture Start Fix
 
-This version keeps the B/reference player timeline visually parked at the last known playback position when the reference is paused/stopped, instead of briefly jumping back to 0:00.
+This build fixes the reference-recording regression where RECORD REF could stay at `LISTENING... 0.0 s` even though B was playing.
 
-- Seek/progress bar keeps the last trustworthy position while paused.
-- Current-time display stays at that same position.
-- Playback itself is unchanged; starting again continues to follow the live player position.
-- Genuine track changes still reset normally.
-- Explicit user seeks still update the displayed position immediately.
+System-audio capture is no longer requested just because the editor opens. RECORD REF starts capture on demand, and if an earlier asynchronous start is still pending it is restarted cleanly before reference learning begins.
 
-Plugin/CMake version: 0.5.73.
+The B/reference timeline position-hold behaviour from 0.5.73 is preserved.
+
+Plugin/CMake version: 0.5.74.

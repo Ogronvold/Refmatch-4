@@ -34,7 +34,13 @@ void RefMatchAudioProcessor::recordProfile(LearnCapture::Side side)
     // A new capture invalidates the previously learned relationship. Keep the
     // user's EQ controls, but return MATCH to the pre-match workflow.
     if (hasMatch()) clearMatch();
-    if (side==LearnCapture::reference && !isReferenceCaptureRunning()) startReferenceCapture();
+    if (side==LearnCapture::reference && !isReferenceCaptureRunning()) {
+        // RECORD REF is the authoritative start point for system-audio capture.
+        // If a previous asynchronous start is still pending, restart it cleanly
+        // instead of leaving the learning state armed against a stale request.
+        if (isReferenceCaptureStarting()) stopReferenceCapture();
+        startReferenceCapture();
+    }
     selectSource(side==LearnCapture::reference);
     learning.stop();referenceAnalysis.learning.stop();
     if(side==LearnCapture::reference) {
