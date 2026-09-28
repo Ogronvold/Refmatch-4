@@ -796,9 +796,34 @@ void RefMatchAudioProcessorEditor::timerCallback()
     // seconds in onValueChange above. A genuine track change is accepted
     // immediately, including while paused.
     if(p.valid && p.duration>0.0) {
-        const bool sameTrack = referenceDisplayMedia.valid && p.track.isNotEmpty()
-                            && p.track == referenceDisplayMedia.track;
-        if(playback == 1 || !sameTrack || !referenceDisplayMedia.valid) {
+        const bool sameTrackId = referenceDisplayMedia.valid && p.track.isNotEmpty()
+                              && referenceDisplayMedia.track.isNotEmpty()
+                              && p.track == referenceDisplayMedia.track;
+        const bool sameTitleArtist = referenceDisplayMedia.valid && p.title.isNotEmpty()
+                                  && referenceDisplayMedia.title.isNotEmpty()
+                                  && p.title == referenceDisplayMedia.title
+                                  && p.artist == referenceDisplayMedia.artist;
+        const bool sameTrack = sameTrackId || sameTitleArtist;
+
+        // MediaRemote can briefly publish 0:00 during an A/B transport hand-off
+        // even though the reference track has not actually restarted. Never let
+        // that transient sample flash the seek bar back to the beginning. A real
+        // user seek through referenceSeek updates referenceDisplayMedia directly,
+        // and a genuine track change is still accepted below.
+        const bool transientZero = referenceDisplayMedia.valid
+                                && referenceDisplayMedia.seconds > 0.15
+                                && p.seconds < 0.02
+                                && (sameTrack || processor.isTransportPending());
+
+        if(transientZero) {
+            referenceDisplayMedia.playing = playback == 1;
+            referenceDisplayMedia.playbackKnown = p.playbackKnown;
+            if(p.duration > 0.0) referenceDisplayMedia.duration = p.duration;
+            if(p.track.isNotEmpty()) referenceDisplayMedia.track = p.track;
+            if(p.title.isNotEmpty()) referenceDisplayMedia.title = p.title;
+            if(p.artist.isNotEmpty()) referenceDisplayMedia.artist = p.artist;
+            if(p.artwork.isValid()) referenceDisplayMedia.artwork = p.artwork;
+        } else if(playback == 1 || !sameTrack || !referenceDisplayMedia.valid) {
             referenceDisplayMedia = p;
         } else {
             // Paused/stopped + same track: never let a stale MediaRemote clock
@@ -1046,7 +1071,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.75    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.76    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
