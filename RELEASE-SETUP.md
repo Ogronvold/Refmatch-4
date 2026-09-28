@@ -1,12 +1,13 @@
-# RefMatch 0.5.74 — Release setup
+# RefMatch 0.5.75 — Release setup
 
-Build the RefMatch project with the existing GitHub Actions workflow or the existing JUCE/CMake macOS build process. The expected visible plugin version is `v0.5.74`.
+Build the RefMatch project with the existing GitHub Actions workflow or the existing JUCE/CMake macOS build process. The expected visible plugin version is `v0.5.75`.
 
-After installing the AU/VST3 build, verify:
+Regression checks for this build:
 
-1. B/reference playback still holds its displayed timeline position while paused.
-2. Press RECORD REF while B is paused: playback starts and reference capture advances beyond 0.0 s once system audio arrives.
-3. Press RECORD REF while B is already playing: playback is not restarted and capture advances normally.
-4. Stop RECORD REF: the captured duration remains available for Match.
-
-If macOS has revoked Screen & System Audio Recording permission for the DAW/AU host, re-enable that permission and reopen the host before testing.
+1. Start B/reference playback and confirm current time + seek bar advance normally.
+2. Pause/stop B and confirm both freeze immediately at the last playback position.
+3. Leave B paused for several seconds and confirm neither time nor seek bar continues counting.
+4. Resume playback and confirm the display continues naturally from the current real position.
+5. Seek while paused and confirm the UI reflects the explicit seek without drifting afterward.
+6. Change track and confirm metadata/artwork/position update for the new track.
+7. Confirm RECORD REF still starts system-audio capture correctly (0.5.74 fix retained).

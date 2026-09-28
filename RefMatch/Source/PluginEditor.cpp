@@ -787,21 +787,25 @@ void RefMatchAudioProcessorEditor::timerCallback()
     const auto p=processor.getLoop().getPosition();position.setText(p.valid?timeText(p.seconds)+"  /  "+timeText(p.duration):"Position unavailable",juce::dontSendNotification);
     const auto playback=processor.getMediaController().playbackState();
 
-    // MediaRemote can briefly report an invalid/zero elapsed time when the
-    // reference is paused. The audio itself resumes at the correct position,
-    // so keep the mini-player frozen at its last trustworthy position instead
-    // of visually jumping back to 0:00. A genuine track change still resets
-    // immediately, and an explicit seek updates this cache in onValueChange.
+    // Keep the mini-player position tied to the actual playback state.
+    // MediaRemote can continue publishing an advancing/stale elapsed time for a
+    // short period after Spotify has paused/stopped. The transport state is the
+    // authoritative signal for whether the UI is allowed to advance. While
+    // paused/stopped on the same track, freeze the last trustworthy position;
+    // metadata/duration may still refresh. Explicit seeks update the cached
+    // seconds in onValueChange above. A genuine track change is accepted
+    // immediately, including while paused.
     if(p.valid && p.duration>0.0) {
         const bool sameTrack = referenceDisplayMedia.valid && p.track.isNotEmpty()
                             && p.track == referenceDisplayMedia.track;
-        const bool looksLikePausedReset = playback != 1 && sameTrack
-                            && referenceDisplayMedia.seconds > 0.25 && p.seconds < 0.05;
-        if(!looksLikePausedReset) {
+        if(playback == 1 || !sameTrack || !referenceDisplayMedia.valid) {
             referenceDisplayMedia = p;
         } else {
+            // Paused/stopped + same track: never let a stale MediaRemote clock
+            // move the seek bar or current-time label forward.
             referenceDisplayMedia.playing = false;
             referenceDisplayMedia.playbackKnown = p.playbackKnown;
+            if(p.duration > 0.0) referenceDisplayMedia.duration = p.duration;
             if(p.title.isNotEmpty()) referenceDisplayMedia.title = p.title;
             if(p.artist.isNotEmpty()) referenceDisplayMedia.artist = p.artist;
             if(p.artwork.isValid()) referenceDisplayMedia.artwork = p.artwork;
@@ -809,8 +813,8 @@ void RefMatchAudioProcessorEditor::timerCallback()
     } else if(playback == 1 || !referenceDisplayMedia.valid) {
         referenceDisplayMedia = p;
     } else {
-        // Paused + temporarily unavailable position: keep the last valid UI
-        // position rather than clearing the seek bar.
+        // Paused/stopped + temporarily unavailable position: keep the last
+        // valid UI position rather than clearing or extrapolating it.
         referenceDisplayMedia.playing = false;
         referenceDisplayMedia.playbackKnown = p.playbackKnown;
     }
@@ -1042,7 +1046,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.74    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.75    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
