@@ -835,12 +835,17 @@ void RefMatchAudioProcessorEditor::timerCallback()
             if(p.artist.isNotEmpty()) referenceDisplayMedia.artist = p.artist;
             if(p.artwork.isValid()) referenceDisplayMedia.artwork = p.artwork;
         }
-    } else if(playback == 1 || !referenceDisplayMedia.valid) {
+    } else if(!referenceDisplayMedia.valid) {
+        // No cached media yet, so there is nothing useful to preserve.
         referenceDisplayMedia = p;
     } else {
-        // Paused/stopped + temporarily unavailable position: keep the last
-        // valid UI position rather than clearing or extrapolating it.
-        referenceDisplayMedia.playing = false;
+        // MediaRemote can briefly return an invalid/empty position while A/B
+        // transport changes state. Never replace an already valid display
+        // position with that transient sample, even if PLAY has just been
+        // requested. Otherwise the seek bar flashes to 0 before metadata
+        // becomes valid again. Keep the last trustworthy position and only
+        // refresh transport flags until a valid position arrives.
+        referenceDisplayMedia.playing = playback == 1;
         referenceDisplayMedia.playbackKnown = p.playbackKnown;
     }
 
@@ -1071,7 +1076,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.76    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.77    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);

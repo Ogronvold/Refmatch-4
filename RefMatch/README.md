@@ -1,4 +1,4 @@
-# RefMatch 0.5.76
+# RefMatch 0.5.77
 
 Reference progress freeze fix.
 
