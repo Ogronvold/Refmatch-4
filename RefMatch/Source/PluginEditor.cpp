@@ -881,6 +881,12 @@ void RefMatchAudioProcessorEditor::timerCallback()
         autoGain.setButtonText("MEASURING");
         autoGain.setEnabled(false);
         autoGain.setToggleState(true,juce::dontSendNotification);
+    } else if(processor.isAutoGainWaitingForMix()) {
+        autoGain.getProperties().set("autoGainMeasuring",false);
+        autoGain.getProperties().set("autoGainProgress",0.0f);
+        autoGain.setButtonText("PLAY MIX");
+        autoGain.setEnabled(false);
+        autoGain.setToggleState(true,juce::dontSendNotification);
     } else {
         autoGain.getProperties().set("autoGainMeasuring",false);
         autoGain.getProperties().set("autoGainProgress",0.0f);
@@ -1086,7 +1092,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.78    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.79    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);

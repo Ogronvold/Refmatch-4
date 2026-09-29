@@ -110,6 +110,22 @@ void RefMatchAudioProcessor::timerCallback()
 {
     referenceLoop.setAuditioning(isReferenceSelected());
 
+    // If AUTO GAIN was armed while Logic/the mix was stopped, keep the request
+    // alive and begin automatically as soon as real MIX audio appears. This
+    // makes the UI instruction "PLAY MIX" actionable without requiring a
+    // second click on AUTO GAIN.
+    if (autoGainWaitingForMix.load())
+    {
+        const double now = juce::Time::getMillisecondCounterHiRes();
+        const bool mixFresh = now - sourceLoudness.getLastUpdateMs() < 250.0;
+        const bool mixAudible = sourceLoudness.getLufs() > -60.0f;
+        if (mixFresh && mixAudible)
+        {
+            autoGainWaitingForMix.store(false);
+            startAutoGainMeasurement();
+        }
+    }
+
     // Five-second perceptual level match. A and B are measured in parallel with
     // the same K-weighted short-term loudness detector. Only fresh, non-silent
     // samples are accepted, and the final correction is the robust median A/B
@@ -451,22 +467,9 @@ bool RefMatchAudioProcessor::isReferenceSelected() const
     return apvts.getRawParameterValue("reference")->load() > 0.5f;
 }
 
-void RefMatchAudioProcessor::autoGainMatch()
+void RefMatchAudioProcessor::startAutoGainMeasurement()
 {
     if (autoGainRunning.load()) return;
-
-    // AUTO GAIN is only meaningful while the DAW/mix is actively feeding A.
-    // A stopped transport can still leave the plug-in instantiated, so require
-    // both a fresh analyser update and real non-silent loudness before starting.
-    const double now = juce::Time::getMillisecondCounterHiRes();
-    const bool mixFresh = now - sourceLoudness.getLastUpdateMs() < 250.0;
-    const bool mixAudible = sourceLoudness.getLufs() > -60.0f;
-    if (!mixFresh || !mixAudible)
-    {
-        autoGainStatus = "PLAY MIX · THEN AUTO GAIN";
-        autoGainProgress.store(0.0f);
-        return;
-    }
 
     // Ensure B analysis is alive. The capture excludes Logic/current process, so
     // A can keep playing into the plug-in while the reference is measured.
@@ -478,14 +481,52 @@ void RefMatchAudioProcessor::autoGainMatch()
     autoGainValidFrames = 0;
     autoGainStartedMs = juce::Time::getMillisecondCounterHiRes();
     autoGainProgress.store(0.0f);
-    autoGainStatus = "MEASURING  5.0 s";
+    autoGainStatus = "MEASURING";
     autoGainRestoreMix = !isReferenceSelected();
     autoGainRunning.store(true);
 
-    // Start/audition B for the measurement window if the user was on A. A's
-    // pre-gain input analyser continues to receive the DAW signal while muted.
+    // AUTO GAIN needs the reference to run during the measurement window. If A
+    // is selected, use the normal switch flow (which starts the stream). If B is
+    // already selected but paused, request PLAY directly. Never restart a stream
+    // that is already playing.
     if (autoGainRestoreMix)
+    {
         switchWithSystemMedia();
+    }
+    else if (!isTransportPending() && mediaController.playbackState() != 1 && !mediaController.isBusy())
+    {
+        mediaController.request(SystemMediaController::Command::play,
+            [this](bool ok, SystemMediaInfo, juce::String error) {
+                if (!ok)
+                {
+                    transportError = error.isNotEmpty() ? error : "Could not start stream playback for Auto Gain.";
+                    autoGainStatus = "RETRY · START REFERENCE";
+                    autoGainRunning.store(false);
+                    autoGainProgress.store(0.0f);
+                }
+            });
+    }
+}
+
+void RefMatchAudioProcessor::autoGainMatch()
+{
+    if (autoGainRunning.load() || autoGainWaitingForMix.load()) return;
+
+    // A stopped Logic transport can leave the plug-in instantiated without real
+    // MIX audio. Arm AUTO GAIN and wait for the user to press Play in the DAW;
+    // the timer will start measurement automatically on the first fresh signal.
+    const double now = juce::Time::getMillisecondCounterHiRes();
+    const bool mixFresh = now - sourceLoudness.getLastUpdateMs() < 250.0;
+    const bool mixAudible = sourceLoudness.getLufs() > -60.0f;
+    if (!mixFresh || !mixAudible)
+    {
+        autoGainStatus = "PLAY MIX";
+        autoGainProgress.store(0.0f);
+        autoGainWaitingForMix.store(true);
+        return;
+    }
+
+    startAutoGainMeasurement();
 }
 
 bool RefMatchAudioProcessor::hasEnoughMatchData() const
@@ -539,6 +580,10 @@ void RefMatchAudioProcessor::resetSession()
     // preferences are intentionally preserved.
     learning.clear();
     referenceAnalysis.learning.clear();
+    autoGainWaitingForMix.store(false);
+    autoGainRunning.store(false);
+    autoGainProgress.store(0.0f);
+    autoGainStatus = "AUTO GAIN";
     clearMatch();
     learningStatus="Record MIX and REF, then press MATCH  ·  Recommended: at least 8 s";
 }

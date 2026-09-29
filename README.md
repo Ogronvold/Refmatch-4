@@ -1,11 +1,11 @@
-# RefMatch 0.5.78 — Paused Seek Fix
+# RefMatch 0.5.79 — Auto Gain Play Mix Flow
 
-This build fixes the B/reference seek bar while playback is paused.
+Full source package.
 
-New in 0.5.78:
-- Seek by click/drag while paused.
-- Seeking does not auto-start playback.
-- The selected paused position stays visible immediately.
-- Timer polling no longer fights the user during a drag.
+New in 0.5.79:
+- Pressing Auto Gain while the MIX is stopped now shows `PLAY MIX`.
+- As soon as Logic/the DAW starts feeding real MIX audio, Auto Gain begins measuring automatically.
+- Spotify/reference playback starts automatically when the measurement needs it, without restarting an already-playing stream.
+- Existing Auto Gain progress-fill and completed dB state are preserved.
 
-Plugin/CMake version: 0.5.78.
+Plugin/CMake version: 0.5.79.

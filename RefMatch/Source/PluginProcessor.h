@@ -67,6 +67,7 @@ public:
     ReferenceLoop& getLoop() { return referenceLoop; }
     void autoGainMatch();
     bool isAutoGainMatching() const { return autoGainRunning.load(); }
+    bool isAutoGainWaitingForMix() const { return autoGainWaitingForMix.load(); }
     float getAutoGainProgress() const { return autoGainProgress.load(); }
     juce::String getAutoGainStatus() const { return autoGainStatus; }
     float getLastAutoGainDb() const { return lastAutoGainDb.load(); }
@@ -100,6 +101,7 @@ private:
     void timerCallback() override;
     void pauseMediaAndRestore();
     void recalculateMatch();
+    void startAutoGainMeasurement();
     SystemMediaController mediaController;
     ReferenceLoop referenceLoop {mediaController};
     TransportSwitch transportSwitch;
@@ -127,6 +129,7 @@ private:
     juce::SmoothedValue<float> sourceGainSmoother;
 
     std::atomic<bool> autoGainRunning { false };
+    std::atomic<bool> autoGainWaitingForMix { false };
     std::atomic<float> autoGainProgress { 0.0f };
     std::atomic<float> lastAutoGainDb { 0.0f };
     juce::String autoGainStatus { "AUTO GAIN" };
