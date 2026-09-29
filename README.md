@@ -1,11 +1,12 @@
-# RefMatch 0.5.79 — Auto Gain Play Mix Flow
+# RefMatch 0.5.80 — Signal Meter Alignment
 
-Full source package.
+Incremental UI-only update based on 0.5.79.
 
-New in 0.5.79:
-- Pressing Auto Gain while the MIX is stopped now shows `PLAY MIX`.
-- As soon as Logic/the DAW starts feeding real MIX audio, Auto Gain begins measuring automatically.
-- Spotify/reference playback starts automatically when the measurement needs it, without restarting an already-playing stream.
-- Existing Auto Gain progress-fill and completed dB state are preserved.
+New in 0.5.80:
+- A signal activity meter now sits immediately beside `YOUR MIX`.
+- B signal activity meter now sits immediately beside the reference track title.
+- Reference title truncation reserves room for the meter.
 
-Plugin/CMake version: 0.5.79.
+No DSP, Auto Gain, playback, Match, Loop or Tone behaviour changed.
+
+Plugin/CMake version: 0.5.80.

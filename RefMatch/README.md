@@ -1,8 +1,3 @@
-# RefMatch 0.5.79
+# RefMatch 0.5.80
 
-Reference progress freeze fix.
-
-- B/reference current-time and seek-bar now freeze when playback is paused/stopped.
-- No stale MediaRemote elapsed clock is allowed to advance the mini-player while transport is not playing.
-- Track changes and explicit seeks still update correctly.
-- Reference capture-start fix from 0.5.74 is retained.
+Source tree for RefMatch 0.5.80. This update moves the small A/B signal activity meters beside their associated labels while preserving existing signal logic.

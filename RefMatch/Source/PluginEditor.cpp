@@ -1092,7 +1092,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.79    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.80    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -1117,7 +1117,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
             g.fillRoundedRectangle(x+i*3.3f,y+(11.0f-h)*0.5f,1.7f,h,0.85f);
         }
     };
-    drawSignalActivity(205.f,102.f,processor.getSourcePeakDb(),cyan);
+    drawSignalActivity(232.f,82.f,processor.getSourcePeakDb(),cyan);
 
     const auto media=referenceDisplayMedia;
     // Reference player: compact enough to stay aligned with A, but structured
@@ -1146,13 +1146,13 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     }
 
     const auto fullTitle=media.title.isNotEmpty()?media.title:"REFERENCE";
-    const auto shownTitle=fullTitle.length()>15?fullTitle.substring(0,14)+"...":fullTitle;
+    const auto shownTitle=fullTitle.length()>13?fullTitle.substring(0,12)+"...":fullTitle;
     const auto shownArtist=media.artist.length()>16?media.artist.substring(0,15)+"...":media.artist;
     g.setColour(text);g.setFont(juce::Font(juce::FontOptions(14.0f,juce::Font::bold)));
-    g.drawText(shownTitle,682,75,94,22,juce::Justification::left);
+    g.drawText(shownTitle,682,75,82,22,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.8f)));g.setColour(text.withAlpha(.72f));
     g.drawText(shownArtist,682,100,94,18,juce::Justification::left);
-    drawSignalActivity(764.f,102.f,processor.getReferencePeakDb(),violet);
+    drawSignalActivity(770.f,80.f,processor.getReferencePeakDb(),violet);
 
     // Time labels frame the seek bar without increasing the card height.
     g.setFont(juce::Font(juce::FontOptions(9.4f)));
