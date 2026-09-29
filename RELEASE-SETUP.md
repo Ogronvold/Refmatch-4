@@ -1,12 +1,13 @@
-# RefMatch 0.5.77 — Release setup
+# RefMatch 0.5.78 — Release setup
 
-Build and install using the same macOS JUCE/GitHub Actions workflow as prior releases.
+Build the AU/VST3/Standalone targets through the existing macOS GitHub Actions workflow.
 
-Expected visible plugin version: `v0.5.77`.
+Expected visible plugin version: `v0.5.78`.
 
-Regression checks:
-- Switch repeatedly between A and B while B is mid-track: the B seek bar must not flash to 0.
-- Pause/stop B: seek bar and current time must freeze at the last position.
-- Resume B: position must continue from the real playback location.
-- RECORD REF must still receive system audio and advance from LISTENING 0.0 s when audio is present.
-- Genuine track changes and manual seeks must still update the mini-player normally.
+Primary regression test:
+1. Play a Spotify/reference track in B.
+2. Pause it.
+3. Drag or click the B progress bar to another position.
+4. Confirm the current-time/progress UI moves immediately and stays there.
+5. Confirm Spotify remains paused.
+6. Press Play and confirm playback resumes from the selected position.

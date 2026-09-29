@@ -14,10 +14,21 @@ public:
     void enable(bool value){loop.enable(value);message=value?"LOOP WAITING - checking player":"Loop off";}
     void clear(){loop.clear();message="Loop region cleared - drag on the timeline to create a new loop";}
     bool seek(double seconds) {
-        if(!position.valid || !std::isfinite(seconds))return false;
+        // A paused MediaRemote session can briefly report position.valid=false even
+        // though we still have a trustworthy track/duration from the last sample.
+        // Manual seeks must continue to work in that state; seeking must not imply
+        // playback.
+        const bool haveSeekContext = position.valid || position.track.isNotEmpty() || position.duration > 0.0;
+        if(!haveSeekContext || !std::isfinite(seconds))return false;
         seconds=loop.manualTarget(seconds,position.duration);
         if(!controller.seekTo(seconds)){message="Seek unavailable - loop remains armed";return false;}
-        loop.manualSeek();position.seconds=seconds;lastManualSeek=juce::Time::getMillisecondCounterHiRes();return true;
+        loop.manualSeek();
+        position.seconds=seconds;
+        // Preserve the cached media identity so the UI can hold the explicit seek
+        // while paused until MediaRemote publishes the confirmed position again.
+        position.valid = position.valid || position.track.isNotEmpty();
+        lastManualSeek=juce::Time::getMillisecondCounterHiRes();
+        return true;
     }
     bool skip(double delta){return seek(position.seconds+delta);}
     bool isEnabled() const{return loop.isEnabled();}

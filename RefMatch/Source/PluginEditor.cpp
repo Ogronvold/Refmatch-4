@@ -471,14 +471,20 @@ RefMatchAudioProcessorEditor::RefMatchAudioProcessorEditor(RefMatchAudioProcesso
     referenceSeek.setColour(juce::Slider::trackColourId,violet);
     referenceSeek.getProperties().set("compactSeek",true);
     referenceSeek.setRange(0.0,1.0,0.01);
+    referenceSeek.onDragStart=[this]{ referenceSeekDragging=true; };
+    referenceSeek.onDragEnd=[this]{ referenceSeekDragging=false; };
     referenceSeek.onValueChange=[this]{
+        const auto target=referenceSeek.getValue();
         const auto pos=processor.getLoop().getPosition();
-        if(pos.valid && pos.duration>0.0 && processor.getLoop().seek(referenceSeek.getValue())) {
+        const double duration = pos.duration>0.0 ? pos.duration : referenceDisplayMedia.duration;
+        if(duration>0.0 && processor.getLoop().seek(target)) {
             // Keep the mini-player display aligned with an explicit user seek,
-            // including while playback is paused.
-            referenceDisplayMedia = pos;
-            referenceDisplayMedia.seconds = referenceSeek.getValue();
+            // including while playback is paused. Do not start playback here.
+            if(pos.track.isNotEmpty() || pos.title.isNotEmpty()) referenceDisplayMedia = pos;
+            referenceDisplayMedia.duration = duration;
+            referenceDisplayMedia.seconds = juce::jlimit(0.0,duration,target);
             referenceDisplayMedia.valid = true;
+            repaint();
         }
     };
     // Keep the compact reference transport visually clean: no hover tooltip
@@ -856,10 +862,14 @@ void RefMatchAudioProcessorEditor::timerCallback()
     referenceSeek.setEnabled(currentMedia.valid && currentMedia.duration>0.0);
     if(currentMedia.valid && currentMedia.duration>0.0) {
         referenceSeek.setRange(0.0,std::max(0.01,currentMedia.duration),0.01);
-        referenceSeek.setValue(juce::jlimit(0.0,currentMedia.duration,currentMedia.seconds),juce::dontSendNotification);
+        // While the user is dragging, never let the polling timer snap the thumb
+        // back to the last MediaRemote sample. This is especially important when
+        // playback is paused, where MediaRemote confirmation can arrive later.
+        if(!referenceSeekDragging)
+            referenceSeek.setValue(juce::jlimit(0.0,currentMedia.duration,currentMedia.seconds),juce::dontSendNotification);
     } else {
         referenceSeek.setRange(0.0,1.0,0.01);
-        referenceSeek.setValue(0.0,juce::dontSendNotification);
+        if(!referenceSeekDragging) referenceSeek.setValue(0.0,juce::dontSendNotification);
     }
     play.setToggleState(playback==1,juce::dontSendNotification);
     play.setButtonText("");
@@ -1076,7 +1086,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.77    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.78    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);

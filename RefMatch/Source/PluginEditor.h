@@ -70,5 +70,6 @@ private:
     juce::Image cachedArtwork;
     juce::String cachedArtworkTrack;
     SystemMediaController::MediaPosition referenceDisplayMedia;
+    bool referenceSeekDragging=false;
     enum class MatchDrag { none, low, high } matchDrag=MatchDrag::none;
 };

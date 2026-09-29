@@ -1,11 +1,11 @@
-# RefMatch 0.5.77 — A/B Progress Hold
+# RefMatch 0.5.78 — Paused Seek Fix
 
-Incremental source release based on 0.5.76.
+This build fixes the B/reference seek bar while playback is paused.
 
-New in 0.5.77:
-- Keeps the last valid B/reference position through transient invalid MediaRemote reads during A/B switching.
-- Prevents the mini-player seek bar/current-time display from flashing to 0 before the real position returns.
-- Genuine valid track changes, seeks and real position updates are still accepted normally.
-- Preserves the reference-capture start fix from 0.5.74 and pause/stop progress freeze from 0.5.75.
+New in 0.5.78:
+- Seek by click/drag while paused.
+- Seeking does not auto-start playback.
+- The selected paused position stays visible immediately.
+- Timer polling no longer fights the user during a drag.
 
-Plugin/CMake version: 0.5.77.
+Plugin/CMake version: 0.5.78.
