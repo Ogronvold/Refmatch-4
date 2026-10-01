@@ -926,7 +926,10 @@ void RefMatchAudioProcessorEditor::drawSpectrum(juce::Graphics& g,juce::Rectangl
     g.fillRoundedRectangle(r,11.f);
     g.setColour(line.withAlpha(.42f));g.drawRoundedRectangle(r,11.f,.9f);
     g.setColour(juce::Colours::white.withAlpha(.022f));g.drawRoundedRectangle(r.reduced(1.f),10.f,.7f);
-    auto plot=r.reduced(12,20);
+    // Reserve a proper left-side gutter for the dB labels so the axis text
+    // never sits on top of the chart border/target handle. Keep the data
+    // area itself unchanged in behaviour; this is spacing/rendering only.
+    auto plot=r.withTrimmedLeft(30.f).withTrimmedRight(12.f).withTrimmedTop(20.f).withTrimmedBottom(20.f);
     // Refined analyser grid: a dark navy field with restrained major/minor guides.
     // The curves remain the visual focus while the denser grid gives the graph a
     // finished studio-analyser feel.
@@ -1074,12 +1077,13 @@ void RefMatchAudioProcessorEditor::drawSpectrum(juce::Graphics& g,juce::Rectangl
         g.fillEllipse(lx-4,plot.getCentreY()-4,8,8);g.fillEllipse(hx-4,plot.getCentreY()-4,8,8);
         g.setFont(juce::Font(juce::FontOptions(9)));g.setColour(muted);
         const auto hzText=[](float hz){return hz>=1000.f?juce::String(hz/1000.f,hz<10000?1:0)+"k":juce::String(int(hz));};
-        g.drawText("LOW "+hzText(low)+" Hz",juce::Rectangle<float>(lx+5,plot.getY(),76,14),juce::Justification::left);
-        g.drawText("HIGH "+hzText(high)+" Hz",juce::Rectangle<float>(hx-82,plot.getY(),78,14),juce::Justification::right);
+        g.drawText("LOW "+hzText(low)+" Hz",juce::Rectangle<float>(lx+8.f,plot.getY()+2.f,76.f,14.f),juce::Justification::left);
+        g.drawText("HIGH "+hzText(high)+" Hz",juce::Rectangle<float>(hx-82.f,plot.getY()+2.f,78.f,14.f),juce::Justification::right);
         g.setFont(juce::Font(juce::FontOptions(8.5f)));g.setColour(muted.withAlpha(.88f));
-        g.drawText("+"+juce::String(graphScale,0),juce::Rectangle<float>(r.getX()-4.f,plot.getY()-3.f,30.f,14.f),juce::Justification::left);
-        g.drawText("0",juce::Rectangle<float>(r.getX()-4.f,plot.getCentreY()-7.f,24.f,14.f),juce::Justification::left);
-        g.drawText("-"+juce::String(graphScale,0),juce::Rectangle<float>(r.getX()-4.f,plot.getBottom()-10.f,30.f,14.f),juce::Justification::left);
+        const juce::Rectangle<float> yAxisGutter(r.getX()+4.f, plot.getY(), std::max(20.f, plot.getX()-r.getX()-8.f), plot.getHeight());
+        g.drawText("+"+juce::String(graphScale,0),juce::Rectangle<float>(yAxisGutter.getX(),plot.getY()-1.f,yAxisGutter.getWidth(),14.f),juce::Justification::centredRight);
+        g.drawText("0",juce::Rectangle<float>(yAxisGutter.getX(),plot.getCentreY()-7.f,yAxisGutter.getWidth(),14.f),juce::Justification::centredRight);
+        g.drawText("-"+juce::String(graphScale,0),juce::Rectangle<float>(yAxisGutter.getX(),plot.getBottom()-13.f,yAxisGutter.getWidth(),14.f),juce::Justification::centredRight);
         if(processor.hasMatch()) {
             const auto appliedCurve=processor.getMatchCurveDb();
             bool outside=false;for(auto db:appliedCurve)outside=outside || std::abs(db)>graphScale;
@@ -1110,7 +1114,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.82    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.83    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
