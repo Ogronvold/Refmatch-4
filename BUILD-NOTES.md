@@ -1,15 +1,15 @@
-# RefMatch 0.5.84 — Tone Section Polish
+# RefMatch 0.5.86 — Hear Matched Spacing Fix
 
-## UI
-- Rebuilt the bottom Tone section as a single cohesive module inspired by the supplied reference.
-- Added a calmer header, stronger column alignment, subtle separators and filter-shape preview cards.
-- LOW keeps the orange accent, MID uses pink, and HIGH keeps violet.
-- Existing filter type buttons, Gain/Freq sliders and MID Q control remain the real interactive controls.
-- Added a quiet Tone footer/status line.
+## Changes
+- Based directly on 0.5.84.
+- Reduced the HEAR MATCHED / HEAR ORIGINAL compare pill height slightly and moved it 1 px upward relative to its previous position.
+- Moved only the top edge of the Match EQ card down by 3 px while keeping the card bottom fixed.
+- This creates clean separation between the compare pill and the Match EQ container without moving the graph, sliders, Tone section or action row.
+- Visible plugin version and CMake project version updated to 0.5.86.
 
-## Behaviour
-- No Tone DSP or parameter-range changes.
-- No Match EQ, A/B, playback, Auto Gain or Loop changes.
-
-## Version
-- Visible plugin version and CMake project version updated to 0.5.84.
+## Unchanged
+- DSP and Match EQ calculation
+- A/B and Spotify/reference playback
+- Auto Gain
+- Loop
+- Tone processing and parameter bindings

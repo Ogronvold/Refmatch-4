@@ -1114,7 +1114,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.84    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.86    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -1203,7 +1203,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
 
     if(page==1) {
         // Main graph card
-        const juce::Rectangle<float> graphCard(44,240,872,260);
+        const juce::Rectangle<float> graphCard(44,243,872,257);
         glowRounded(g,graphCard,14.f,violet,.035f);
         g.setGradientFill(juce::ColourGradient(panelRaised.brighter(.02f).withAlpha(.985f),graphCard.getTopLeft(),panel.darker(.18f),graphCard.getBottomRight(),false));
         g.fillRoundedRectangle(graphCard,14.f);
@@ -1378,7 +1378,7 @@ void RefMatchAudioProcessorEditor::resized()
     loopTab.setBounds(page==2?664:676,184,page==2?112:84,38);
     quickLoop.setBounds(page==2?780:764,184,page==2?68:84,38);
     eqOn.setBounds(0,0,0,0);
-    mixProfile.setBounds(54,219,146,18); refProfile.setBounds(232,219,146,18); matchState.setBounds(412,224,116,20); residualStatus.setBounds(0,0,0,0);
+    mixProfile.setBounds(54,219,146,18); refProfile.setBounds(232,219,146,18); matchState.setBounds(412,223,116,18); residualStatus.setBounds(0,0,0,0);
     eqTab.setBounds(44,184,120,36);
 
     // Graph controls

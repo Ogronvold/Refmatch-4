@@ -1,7 +1,7 @@
-# RefMatch 0.5.84 — Release setup
+# RefMatch 0.5.86 — Release setup
 
-Build with the existing GitHub Actions/macOS workflow as usual.
+Build and install using the same workflow as the 0.5.84 baseline.
 
-Expected visible plugin version: `v0.5.84`.
+Expected visible plugin version: `v0.5.86`.
 
-This release is a Tone-section UI/layout polish only; DSP and parameter bindings are unchanged.
+Quick visual check: after MATCHED exists, the HEAR MATCHED / HEAR ORIGINAL pill should be centered under MATCHED with visible space before the Match EQ card begins.

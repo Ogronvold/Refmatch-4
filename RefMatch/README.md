@@ -1,3 +1,3 @@
-# RefMatch 0.5.84
+# RefMatch 0.5.86
 
-Source tree for RefMatch 0.5.84. This update redesigns the Tone section into one cohesive module with a cleaner header, three aligned LOW/MID/HIGH columns, compact filter-shape previews, improved spacing and a subtle status footer. Tone DSP and parameter bindings are unchanged.
+Source tree for RefMatch 0.5.86. Based directly on 0.5.84. This update only fixes spacing around the HEAR MATCHED / HEAR ORIGINAL compare button so it no longer overlaps the Match EQ card. DSP, playback, Match EQ processing, Auto Gain, Loop and Tone behavior are unchanged.
