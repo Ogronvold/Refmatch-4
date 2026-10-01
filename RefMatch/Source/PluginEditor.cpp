@@ -1,7 +1,7 @@
 #include "PluginEditor.h"
 namespace {
 const juce::Colour black(0xff070b11), panel(0xff101722), panelRaised(0xff151d29), line(0xff283344),
-                   text(0xfff2f4f8), muted(0xff7f8999), cyan(0xffffad45), violet(0xffa85df5);
+                   text(0xfff2f4f8), muted(0xff7f8999), cyan(0xffffad45), violet(0xffa85df5), pink(0xffff7bdc);
 
 void label(juce::Label& l,float size,juce::Colour colour=muted) {
     l.setFont(juce::Font(juce::FontOptions(size)));l.setColour(juce::Label::textColourId,colour);
@@ -927,17 +927,25 @@ void RefMatchAudioProcessorEditor::drawSpectrum(juce::Graphics& g,juce::Rectangl
     g.setColour(line.withAlpha(.42f));g.drawRoundedRectangle(r,11.f,.9f);
     g.setColour(juce::Colours::white.withAlpha(.022f));g.drawRoundedRectangle(r.reduced(1.f),10.f,.7f);
     auto plot=r.reduced(12,20);
-    // Denser, studio-style logarithmic grid. Major divisions are brighter, while
-    // intermediate frequency guides add depth without competing with the curve.
-    g.setColour(line.withAlpha(.32f));
-    for(int i=0;i<=8;++i){const float y=plot.getY()+plot.getHeight()*i/8.f;g.drawHorizontalLine(int(y),plot.getX(),plot.getRight());}
+    // Refined analyser grid: a dark navy field with restrained major/minor guides.
+    // The curves remain the visual focus while the denser grid gives the graph a
+    // finished studio-analyser feel.
+    g.setGradientFill(juce::ColourGradient(juce::Colour(0xff0c1521).withAlpha(.96f),plot.getTopLeft(),
+                                           juce::Colour(0xff08111b).withAlpha(.98f),plot.getBottomRight(),false));
+    g.fillRect(plot);
+    for(int i=0;i<=8;++i) {
+        const float y=plot.getY()+plot.getHeight()*i/8.f;
+        const bool centre=i==4;
+        g.setColour(line.withAlpha(centre?.34f:.18f));
+        g.drawHorizontalLine(int(y),plot.getX(),plot.getRight());
+    }
     const auto graphX=[&](double hz){return plot.getX()+float(std::log(hz/20.)/std::log(1000.))*plot.getWidth();};
     for(double hz:{30.,40.,50.,70.,100.,200.,300.,500.,700.,1000.,2000.,3000.,5000.,7000.,10000.,16000.,20000.}) {
         const bool major=hz==100. || hz==1000. || hz==10000.;
-        g.setColour(line.withAlpha(major?.56f:.18f));
+        g.setColour(line.withAlpha(major?.34f:.12f));
         g.drawVerticalLine(int(graphX(hz)),plot.getY(),plot.getBottom());
     }
-    g.setColour(juce::Colours::white.withAlpha(.105f));
+    g.setColour(juce::Colours::white.withAlpha(.12f));
     g.drawHorizontalLine(int(plot.getCentreY()),plot.getX(),plot.getRight());
     if(eq) {
         // Live spectral metric follows the source that is actually being auditioned.
@@ -1026,47 +1034,33 @@ void RefMatchAudioProcessorEditor::drawSpectrum(juce::Graphics& g,juce::Rectangl
             g.fillPath(targetFill);
         }
         const auto targetColour = matchAudible ? violet : muted;
-        g.setColour(targetColour.withAlpha(matchAudible ? .11f : .06f));g.strokePath(targetPath,juce::PathStrokeType(5.5f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
-        g.setColour(targetColour.withAlpha(matchAudible ? .34f : .20f));g.strokePath(targetPath,juce::PathStrokeType(1.25f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+        // Purple target/reference-style trace: soft bloom plus a crisp rounded core.
+        g.setColour(targetColour.withAlpha(matchAudible ? .10f : .045f));
+        g.strokePath(targetPath,juce::PathStrokeType(7.0f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+        g.setColour(targetColour.withAlpha(matchAudible ? .42f : .18f));
+        g.strokePath(targetPath,juce::PathStrokeType(3.0f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+        g.setColour(targetColour.withAlpha(matchAudible ? .92f : .34f));
+        g.strokePath(targetPath,juce::PathStrokeType(1.65f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
 
-        // Draw the actually-applied response as a magnitude-sensitive colour line.
-        // A restrained centre-fill gives the response a premium analyser feel while
-        // keeping the exact curve and grid fully readable.
+        // The actually-applied match is the pink trace from the design language:
+        // a subtle centre fill, broad bloom, then a crisp smooth line. No DSP/data
+        // values are altered here; this is rendering only.
         if(curve.size()>1) {
             auto appliedPath=makeCurvePath(curve);
             auto appliedFill=appliedPath;
             appliedFill.lineTo(plot.getRight(),plot.getCentreY());
             appliedFill.lineTo(plot.getX(),plot.getCentreY());
             appliedFill.closeSubPath();
-            const auto appliedFillColour = matchAudible ? cyan.interpolatedWith(violet,.58f) : muted;
-            g.setGradientFill(juce::ColourGradient(appliedFillColour.withAlpha(matchAudible?.075f:.022f),plot.getTopLeft(),
-                                                   appliedFillColour.withAlpha(.004f),plot.getBottomLeft(),false));
+            const auto appliedColour = matchAudible ? pink : muted;
+            g.setGradientFill(juce::ColourGradient(appliedColour.withAlpha(matchAudible?.13f:.025f),plot.getTopLeft(),
+                                                   appliedColour.withAlpha(.008f),plot.getBottomLeft(),false));
             g.fillPath(appliedFill);
-            const auto nearWhite=eqOn.getToggleState()?text:muted;
-            const juce::Colour mint(0xff73e6b1), blue(0xff55a7ff);
-            for(size_t i=1;i<curve.size();++i) {
-                const float x1=plot.getX()+float(i-1)/float(curve.size()-1)*plot.getWidth();
-                const float x2=plot.getX()+float(i)/float(curve.size()-1)*plot.getWidth();
-                const float y1=plot.getCentreY()-std::clamp(curve[i-1],-scale,scale)/(2*scale)*plot.getHeight();
-                const float y2=plot.getCentreY()-std::clamp(curve[i],-scale,scale)/(2*scale)*plot.getHeight();
-                const float magnitude=.5f*(std::abs(curve[i-1])+std::abs(curve[i]));
-                const float strength=std::clamp(magnitude/4.f,0.f,1.f);
-                juce::Colour colour;
-                if(matchAudible) {
-                    colour=nearWhite.interpolatedWith(mint,std::min(1.f,strength*1.6f));
-                    if(strength>.35f) colour=colour.interpolatedWith(blue,std::clamp((strength-.35f)/.65f,0.f,1.f));
-                } else {
-                    colour=muted.withAlpha(.44f);
-                }
-                if(!eqOn.getToggleState()) colour=colour.withMultipliedAlpha(.55f);
-                // soft bloom underneath each segment, then the crisp coloured line
-                g.setColour(colour.withAlpha(.10f));
-                g.drawLine(x1,y1,x2,y2,7.0f);
-                g.setColour(colour.withAlpha(.30f));
-                g.drawLine(x1,y1,x2,y2,4.2f);
-                g.setColour(colour);
-                g.drawLine(x1,y1,x2,y2,2.0f);
-            }
+            g.setColour(appliedColour.withAlpha(matchAudible?.10f:.035f));
+            g.strokePath(appliedPath,juce::PathStrokeType(8.0f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+            g.setColour(appliedColour.withAlpha(matchAudible?.38f:.16f));
+            g.strokePath(appliedPath,juce::PathStrokeType(4.0f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+            g.setColour(appliedColour.withAlpha(matchAudible?.98f:.36f));
+            g.strokePath(appliedPath,juce::PathStrokeType(1.9f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
         }
 
         }
@@ -1116,7 +1110,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.81    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.82    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
