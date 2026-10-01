@@ -1,7 +1,7 @@
-# RefMatch 0.5.86 — Release setup
+# RefMatch 0.5.87 — Release setup
 
-Build and install using the same workflow as the 0.5.84 baseline.
+Build and install exactly as for the previous RefMatch source packages.
 
-Expected visible plugin version: `v0.5.86`.
+Expected visible plugin version: `v0.5.87`.
 
-Quick visual check: after MATCHED exists, the HEAR MATCHED / HEAR ORIGINAL pill should be centered under MATCHED with visible space before the Match EQ card begins.
+UI check: after a match exists, the HEAR MATCHED / HEAR ORIGINAL pill should appear centered below the large A/B switch and should no longer occupy the area under the MATCHED button.

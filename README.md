@@ -1,9 +1,11 @@
-# RefMatch 0.5.86 — Hear Matched Spacing Fix
+# RefMatch 0.5.87 — Compare Button Reposition
 
-Based directly on RefMatch 0.5.84.
+Based directly on RefMatch 0.5.86.
 
-This build only adjusts the compare-button spacing between the MATCHED action and the MATCH EQ section. HEAR MATCHED / HEAR ORIGINAL remains centered under MATCHED, but no longer overlaps the Match EQ card border/header.
+Changes:
+- Moved `HEAR MATCHED` / `HEAR ORIGINAL` from below the MATCHED button.
+- The compare/bypass pill now sits centered directly below the large A/B switch.
+- Removed the old placement so the Match EQ header has clean spacing.
+- Button styling, state text and processing behavior are unchanged.
 
-No DSP, playback, Auto Gain, Loop, Match EQ processing or Tone behavior was changed.
-
-Plugin/CMake version: 0.5.86.
+Plugin/CMake version: 0.5.87.
