@@ -1,3 +1,3 @@
-# RefMatch 0.5.84
+# RefMatch 0.5.85
 
-Source tree for RefMatch 0.5.84. This update redesigns the Tone section into one cohesive module with a cleaner header, three aligned LOW/MID/HIGH columns, compact filter-shape previews, improved spacing and a subtle status footer. Tone DSP and parameter bindings are unchanged.
+Source tree for RefMatch 0.5.85. This update fixes the Match EQ graph so `Matched (Applied)` represents Match correction only and stays flat at 0 dB when Amount is 0%, independent of manual Tone EQ.

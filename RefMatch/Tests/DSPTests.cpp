@@ -79,6 +79,8 @@ int main()
     juce::AudioBuffer<float> original;original.makeCopyOf(mix);eq.process(mix);
     for(int i=0;i<512;++i)require(std::abs(mix.getSample(0,i)-original.getSample(0,i))<.0001,"zero amount is transparent");
     eq.setAmount(0);eq.setTone({{0,120,3,1000,0,8000}});eq.refresh();
+    const auto matchOnlyZero=eq.getMatchOnlyCurveDb();
+    for(auto db:matchOnlyZero)require(std::abs(db)<.0001,"Matched Applied graph is flat at zero Match Amount even when Tone EQ is active");
     const auto manual=eq.getCurveDb();float manualPeak=0;for(auto db:manual)manualPeak=std::max(manualPeak,db);
     require(manualPeak>2.9,"manual Tone EQ remains active at zero Match Amount");
     inputEnergy=0;outputEnergy=0;

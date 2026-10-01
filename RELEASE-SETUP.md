@@ -1,7 +1,12 @@
-# RefMatch 0.5.84 — Release setup
+# RefMatch 0.5.85 — Release setup
 
-Build with the existing GitHub Actions/macOS workflow as usual.
+Expected visible plugin version: `v0.5.85`.
 
-Expected visible plugin version: `v0.5.84`.
+Build and install using the same GitHub Actions/macOS workflow as previous RefMatch versions.
 
-This release is a Tone-section UI/layout polish only; DSP and parameter bindings are unchanged.
+Regression check after install:
+1. Create a Match.
+2. Turn Tone ON and apply a visible manual Tone boost/cut.
+3. Set Match Amount to 0%.
+4. `Matched (Applied)` must remain perfectly flat at 0 dB, while Tone may still be audible separately.
+5. Verify 50%, 100% and 200% scale the applied Match curve progressively.

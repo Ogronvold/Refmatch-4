@@ -588,8 +588,8 @@ void RefMatchAudioProcessor::resetSession()
     learningStatus="Record MIX and REF, then press MATCH  ·  Recommended: at least 8 s";
 }
 
-std::vector<float> RefMatchAudioProcessor::getMatchCurveDb() const { return matchEQ.getCurveDb(); }
-std::vector<float> RefMatchAudioProcessor::getMatchCurveDbAtAmount(float amount) const { return matchEQ.getCurveDb(amount); }
+std::vector<float> RefMatchAudioProcessor::getMatchCurveDb() const { return matchEQ.getMatchOnlyCurveDb(); }
+std::vector<float> RefMatchAudioProcessor::getMatchCurveDbAtAmount(float amount) const { return matchEQ.getMatchOnlyCurveDb(amount); }
 
 float RefMatchAudioProcessor::getResidualTonalErrorDb() const
 {
