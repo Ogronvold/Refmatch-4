@@ -1,7 +1,7 @@
-# RefMatch 0.5.83 — Release setup
+# RefMatch 0.5.84 — Release setup
 
-Build using the existing GitHub Actions/macOS workflow used for previous RefMatch versions.
+Build with the existing GitHub Actions/macOS workflow as usual.
 
-Expected visible plugin version: `v0.5.83`.
+Expected visible plugin version: `v0.5.84`.
 
-This release only changes the placement of the small A/B signal activity meters and reference-title spacing. No DSP or transport behaviour is intentionally changed.
+This release is a Tone-section UI/layout polish only; DSP and parameter bindings are unchanged.

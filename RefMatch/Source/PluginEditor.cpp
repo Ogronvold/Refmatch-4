@@ -674,7 +674,7 @@ void RefMatchAudioProcessorEditor::setPage(int value)
     quickLoop.setVisible(true);
     eqOn.setVisible(false);
 
-    setSize(960,page==1?650:560);
+    setSize(960,page==1?690:560);
     resized();repaint();
 }
 void RefMatchAudioProcessorEditor::transport(SystemMediaController::Command c)
@@ -1114,7 +1114,7 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("RefMatch",44,18,180,30,juce::Justification::left);
     g.setFont(juce::Font(juce::FontOptions(10.f)));g.setColour(muted);
     g.drawText("Match your sound.",44,48,180,16,juce::Justification::left);
-    g.drawText("v0.5.83    /    STREAM",744,24,150,20,juce::Justification::right);
+    g.drawText("v0.5.84    /    STREAM",744,24,150,20,juce::Justification::right);
 
     // Source cards
     const juce::Rectangle<float> mixCard(44,64,360,104), refCard(536,64,380,104);
@@ -1229,27 +1229,69 @@ void RefMatchAudioProcessorEditor::paint(juce::Graphics& g)
         g.setColour(muted);g.drawText("-",836,459,12,25,juce::Justification::centred);
         smallBox(846,high<1000?juce::String(int(std::round(high)))+" Hz":juce::String(high/1000.f,high>=10000?0:1)+" kHz");
 
-        // Tone EQ section, deliberately flatter and cleaner than the old cards.
-        const juce::Rectangle<float> toneCard(44,514,872,108);
+        // Tone section: one coherent module with a calm header and three clear
+        // band columns. This is a visual/layout pass only; the existing Tone
+        // parameters and attachments remain unchanged.
+        const juce::Rectangle<float> toneCard(44,514,872,152);
         const bool toneProcessing=processor.apvts.getRawParameterValue("toneenabled")->load()>.5f;
         const float toneVisual=toneProcessing?1.0f:.52f;
-        g.setGradientFill(juce::ColourGradient(panelRaised.withAlpha(.96f*toneVisual),toneCard.getTopLeft(),panel.darker(.22f).withAlpha(toneVisual),toneCard.getBottomRight(),false));
-        g.fillRoundedRectangle(toneCard,13.f);
-        g.setColour(line.withAlpha(.72f*toneVisual));g.drawRoundedRectangle(toneCard,13.f,1.f);
-        g.setColour(juce::Colours::white.withAlpha(.02f*toneVisual));g.drawRoundedRectangle(toneCard.reduced(1.f),12.f,.8f);
-        const char* names[3]={"LOW","MID","HIGH"}; const char* ranges[3]={"30 - 300 Hz","200 Hz - 6 kHz","3 - 20 kHz"};
+        g.setGradientFill(juce::ColourGradient(panelRaised.withAlpha(.985f),toneCard.getTopLeft(),panel.darker(.24f),toneCard.getBottomRight(),false));
+        g.fillRoundedRectangle(toneCard,14.f);
+        g.setColour(line.withAlpha(.76f));g.drawRoundedRectangle(toneCard,14.f,1.f);
+        g.setColour(juce::Colours::white.withAlpha(.025f));g.drawRoundedRectangle(toneCard.reduced(1.f),13.f,.8f);
+
+        // Header and section divider.
+        g.setColour(line.withAlpha(.62f));g.fillRect(58.f,552.f,844.f,1.f);
+        g.setFont(juce::Font(juce::FontOptions(9.f,juce::Font::bold)));
+        g.setColour(muted.withAlpha(.82f));g.drawText("TONE SHAPING",194,522,94,20,juce::Justification::left);
+
+        const char* names[3]={"LOW","MID","HIGH"};
+        const char* ranges[3]={"30 - 300 Hz","200 Hz - 6 kHz","3 - 20 kHz"};
+        const float bandX[3]={58.f,346.f,634.f};
         for(int i=0;i<3;++i){
-            const float x=56.f+i*286.f;
-            const auto accent=i==0?cyan:(i==1?cyan.interpolatedWith(violet,.52f):violet);
-            const juce::Rectangle<float> band(x,546.f,276.f,68.f);
-            g.setGradientFill(juce::ColourGradient(accent.withAlpha(.045f*toneVisual),band.getTopLeft(),panel.withAlpha(.10f*toneVisual),band.getBottomRight(),false));
-            g.fillRoundedRectangle(band,9.f);
-            g.setColour(accent.withAlpha(.18f*toneVisual));g.drawRoundedRectangle(band,9.f,.8f);
-            g.setColour(accent.withAlpha(toneVisual));g.fillEllipse(x+8.f,554.f,9.f,9.f);
-            g.setFont(juce::Font(juce::FontOptions(10.5f,juce::Font::bold)));g.drawText(names[i],int(x+25),548,52,22,juce::Justification::left);
-            g.setFont(juce::Font(juce::FontOptions(9.2f)));g.setColour(muted.withAlpha(toneVisual));g.drawText(ranges[i],int(x+78),550,98,18,juce::Justification::left);
-            g.drawText("Gain",int(x+8),576,34,18,juce::Justification::left);g.drawText("Freq",int(x+8),599,34,18,juce::Justification::left);
+            const float x=bandX[i];
+            const auto accent=i==0?cyan:(i==1?juce::Colour(0xffff76b8):violet);
+            if(i>0){g.setColour(line.withAlpha(.50f));g.fillRect(x-12.f,562.f,1.f,86.f);}
+
+            // Band title and subtle accent marker.
+            g.setColour(accent.withAlpha(.95f*toneVisual));g.fillEllipse(x+2.f,566.f,10.f,10.f);
+            g.setFont(juce::Font(juce::FontOptions(11.f,juce::Font::bold)));
+            g.drawText(names[i],int(x+20),559,52,24,juce::Justification::left);
+            g.setFont(juce::Font(juce::FontOptions(8.8f)));
+            g.setColour(muted.withAlpha(.90f*toneVisual));
+            g.drawText(ranges[i],int(x+72),561,104,20,juce::Justification::left);
+
+            // Compact filter-shape preview card.
+            const juce::Rectangle<float> preview(x+2.f,588.f,72.f,54.f);
+            g.setGradientFill(juce::ColourGradient(accent.withAlpha(.13f*toneVisual),preview.getTopLeft(),panel.darker(.08f).withAlpha(.96f),preview.getBottomRight(),false));
+            g.fillRoundedRectangle(preview,8.f);
+            g.setColour(accent.withAlpha(.24f*toneVisual));g.drawRoundedRectangle(preview,8.f,.9f);
+            juce::Path shape;
+            if(i==0){
+                const bool shelf=lowType.getToggleState();
+                if(shelf){shape.startNewSubPath(preview.getX()+10.f,preview.getBottom()-13.f);shape.cubicTo(preview.getX()+25.f,preview.getBottom()-13.f,preview.getX()+28.f,preview.getY()+16.f,preview.getX()+45.f,preview.getY()+16.f);shape.lineTo(preview.getRight()-10.f,preview.getY()+16.f);}
+                else {shape.startNewSubPath(preview.getX()+8.f,preview.getCentreY()+8.f);shape.cubicTo(preview.getX()+24.f,preview.getCentreY()+8.f,preview.getX()+27.f,preview.getY()+12.f,preview.getX()+38.f,preview.getY()+12.f);shape.cubicTo(preview.getX()+50.f,preview.getY()+12.f,preview.getX()+52.f,preview.getCentreY()+8.f,preview.getRight()-8.f,preview.getCentreY()+8.f);}
+            } else if(i==1){
+                shape.startNewSubPath(preview.getX()+8.f,preview.getCentreY()+8.f);shape.cubicTo(preview.getX()+23.f,preview.getCentreY()+8.f,preview.getX()+25.f,preview.getY()+11.f,preview.getCentreX(),preview.getY()+11.f);shape.cubicTo(preview.getRight()-25.f,preview.getY()+11.f,preview.getRight()-23.f,preview.getCentreY()+8.f,preview.getRight()-8.f,preview.getCentreY()+8.f);
+            } else {
+                const bool shelf=highType.getToggleState();
+                if(shelf){shape.startNewSubPath(preview.getX()+9.f,preview.getBottom()-14.f);shape.lineTo(preview.getX()+25.f,preview.getBottom()-14.f);shape.cubicTo(preview.getX()+40.f,preview.getBottom()-14.f,preview.getX()+42.f,preview.getY()+15.f,preview.getRight()-10.f,preview.getY()+15.f);}
+                else {shape.startNewSubPath(preview.getX()+8.f,preview.getCentreY()+8.f);shape.cubicTo(preview.getX()+24.f,preview.getCentreY()+8.f,preview.getX()+27.f,preview.getY()+12.f,preview.getX()+38.f,preview.getY()+12.f);shape.cubicTo(preview.getX()+50.f,preview.getY()+12.f,preview.getX()+52.f,preview.getCentreY()+8.f,preview.getRight()-8.f,preview.getCentreY()+8.f);}
+            }
+            g.setColour(accent.withAlpha(.96f*toneVisual));g.strokePath(shape,juce::PathStrokeType(1.8f,juce::PathStrokeType::curved,juce::PathStrokeType::rounded));
+
+            // Labels line up with the existing sliders.
+            g.setFont(juce::Font(juce::FontOptions(9.2f)));g.setColour(muted.withAlpha(.92f*toneVisual));
+            g.drawText("Gain",int(x+88),588,34,20,juce::Justification::left);
+            g.drawText("Freq",int(x+88),614,34,20,juce::Justification::left);
+            if(i==1)g.drawText("Q",int(x+88),638,34,18,juce::Justification::left);
         }
+
+        // Quiet footer/status separation gives the module a finished edge.
+        g.setColour(line.withAlpha(.42f));g.fillRect(58.f,654.f,844.f,1.f);
+        g.setColour(violet.withAlpha(.92f));g.fillEllipse(60.f,659.f,7.f,7.f);
+        g.setFont(juce::Font(juce::FontOptions(8.8f)));g.setColour(muted.withAlpha(.88f));
+        g.drawText(processor.hasMatch()?"Match applied to MIX":"Tone ready",76,653,160,18,juce::Justification::left);
     } else {
         // LOOP opens beneath the unchanged main toolbar. The highlighted LOOP
         // button above is the view indicator, so the editor only needs a clean
@@ -1342,12 +1384,15 @@ void RefMatchAudioProcessorEditor::resized()
     // Graph controls
     amount.setBounds(118,455,278,34); smooth.setBounds(488,455,202,34); graphRange.setBounds(820,246,82,24);
 
-    // Tone EQ
-    toneButton.setBounds(0,0,0,0); toneOn.setBounds(60,520,112,24); toneReset.setButtonText("Reset All"); toneReset.setBounds(814,520,88,24);
-    tone[0].setBounds(98,572,166,24); tone[1].setBounds(98,596,166,24);
-    tone[2].setBounds(384,572,166,24); tone[3].setBounds(384,596,166,24);
-    tone[4].setBounds(670,572,166,24); tone[5].setBounds(670,596,166,24);
-    lowType.setBounds(238,548,78,20); midQ.setBounds(508,546,126,24); highType.setBounds(808,548,78,20);
+    // Tone EQ: one header plus three aligned band columns.
+    toneButton.setBounds(0,0,0,0); toneOn.setBounds(60,520,112,24);
+    toneReset.setButtonText("Reset All"); toneReset.setBounds(810,520,92,24);
+    tone[0].setBounds(172,584,150,24); tone[1].setBounds(172,610,150,24);
+    tone[2].setBounds(460,584,150,24); tone[3].setBounds(460,610,150,24);
+    tone[4].setBounds(748,584,150,24); tone[5].setBounds(748,610,150,24);
+    lowType.setBounds(244,560,78,20);
+    midQ.setBounds(460,634,150,22);
+    highType.setBounds(820,560,78,20);
 
     // Loop page uses the exact same toolbar geometry as the main page.
     // The LOOP button is highlighted via its toggle state while the section is open.

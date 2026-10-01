@@ -1,12 +1,13 @@
-# RefMatch 0.5.83 — Signal Meter Alignment
+# RefMatch 0.5.84 — Tone Section Polish
 
-Incremental UI-only update based on 0.5.79.
+Visual redesign of the Tone section only.
 
-New in 0.5.83:
-- A signal activity meter now sits immediately beside `YOUR MIX`.
-- B signal activity meter now sits immediately beside the reference track title.
-- Reference title truncation reserves room for the meter.
+- One cohesive Tone container with a cleaner header.
+- LOW / MID / HIGH arranged as aligned columns.
+- Compact filter-shape preview cards.
+- Existing Gain/Freq/Q controls retained and rebound to the same parameters.
+- Existing shelf/bell selectors retained for LOW/HIGH.
+- Subtle dividers and status footer added.
+- Tone DSP, Match EQ, A/B, playback, Auto Gain and Loop logic are unchanged.
 
-No DSP, Auto Gain, playback, Match, Loop or Tone behaviour changed.
-
-Plugin/CMake version: 0.5.83.
+Plugin/CMake version: 0.5.84.
