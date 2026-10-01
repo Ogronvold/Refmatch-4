@@ -1,10 +1,13 @@
-# RefMatch 0.5.85 — Matched Applied Graph Sync Fix
+# RefMatch 0.5.84 — Tone Section Polish
 
-Full source package for RefMatch 0.5.85.
+Visual redesign of the Tone section only.
 
-This release fixes a graph/DSP consistency issue: `Matched (Applied)` now displays only the actual Match EQ correction. Manual Tone EQ is intentionally excluded from that trace, so Amount 0% produces a perfectly flat 0 dB applied-match line.
+- One cohesive Tone container with a cleaner header.
+- LOW / MID / HIGH arranged as aligned columns.
+- Compact filter-shape preview cards.
+- Existing Gain/Freq/Q controls retained and rebound to the same parameters.
+- Existing shelf/bell selectors retained for LOW/HIGH.
+- Subtle dividers and status footer added.
+- Tone DSP, Match EQ, A/B, playback, Auto Gain and Loop logic are unchanged.
 
-Package contents:
-- `RefMatch/` source tree
-- `BUILD-NOTES.md`
-- `RELEASE-SETUP.md`
+Plugin/CMake version: 0.5.84.
